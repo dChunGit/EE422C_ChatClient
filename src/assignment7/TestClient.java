@@ -1,21 +1,22 @@
 package assignment7;
 
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 
+
 import javafx.application.Application;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
-import javafx.event.Event;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextArea;
@@ -27,53 +28,14 @@ import javafx.scene.text.Font;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
 
-public class ChatControl extends Application{
-
+public class TestClient extends Application{
 	private BufferedReader reader;
 	private PrintWriter writer;
 	private TextArea input, text;
 	
-	public static void main(String[] args) {
-    	try {
-			new ChatControl().run();
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-    	launch(args);
-	}
-	
-	public void run() throws Exception {
-		setUpChat();
-	}
-	
-	private void setUpChat() throws Exception {
-		@SuppressWarnings("resource")
-		Socket sock = new Socket("127.0.0.1", 4242);
-		InputStreamReader streamReader = new InputStreamReader(sock.getInputStream());
-		reader = new BufferedReader(streamReader);
-		writer = new PrintWriter(sock.getOutputStream());
-		if(writer == null) {
-			System.out.println("Null writer");
-		}
-		System.out.println("networking established");
-		Thread readerThread = new Thread(new IncomingReader());
-		readerThread.start();
-		//System.out.println("Setup finished");
-	}
-	
-	class IncomingReader implements Runnable {
-		public void run() {
-			String message;
-			try {
-				while ((message = reader.readLine()) != null) {
-					System.out.println(this.toString() + " " + message);
-					//text.appendText(message + "\n");
-				}
-			} catch (IOException ex) {
-				ex.printStackTrace();
-			}
-		}
+	public void run(String[] args) throws Exception {
+		launch(args);
+		setUpNetworking();
 	}
 
 	@Override
@@ -144,40 +106,19 @@ public class ChatControl extends Application{
 		    @Override
 		    public void handle(KeyEvent ke) {
 		        if (ke.getCode().equals(KeyCode.ENTER)) {
-		        	String text = input.getText();
-		            System.out.println(text);
-		            if(writer == null) {
-		            	System.out.println("Null writer");
-		            }
-		        	writer.println(text);
+		        	writer.println(input.getText());
 					writer.flush();
-		            input.clear();
-
+					text.setText("");
+					text.requestFocus();
 		            ke.consume();
 		        }
 		    }
-		});
-		
-		Button send = new Button();
-		send.setText("Send");
-		send.setOnMouseClicked(new EventHandler<Event>() {
-
-			@Override
-			public void handle(Event event) {
-				// TODO Auto-generated method stub
-				writer.println(text.getText());
-				writer.flush();
-				text.setText("");
-			}
-			
 		});
 
 		
 		StackPane inputs = new StackPane();
 		inputs.getChildren().add(input);
-		inputs.getChildren().add(send);
 		StackPane.setAlignment(input, Pos.CENTER_LEFT);
-		StackPane.setAlignment(send, Pos.CENTER_RIGHT);
 		//inputs.setMinWidth(primScreenBounds.getWidth()/3);
 		inputs.setPadding(new Insets(20, 40, 40, 40));
 		
@@ -198,10 +139,47 @@ public class ChatControl extends Application{
 		primaryStage.setScene(scene1);
 		primaryStage.show();
 
-
-
 	}
-	
-	
 
+	private void setUpNetworking() throws Exception {
+		@SuppressWarnings("resource")
+		Socket sock = new Socket("127.0.0.1", 4242);
+		InputStreamReader streamReader = new InputStreamReader(sock.getInputStream());
+		reader = new BufferedReader(streamReader);
+		writer = new PrintWriter(sock.getOutputStream());
+		System.out.println("networking established");
+		Thread readerThread = new Thread(new IncomingReader());
+		readerThread.start();
+	}
+
+	class SendButtonListener implements ActionListener {
+		public void actionPerformed(ActionEvent ev) {
+			writer.println(input.getText());
+			writer.flush();
+			text.setText("");
+			text.requestFocus();
+		}
+	}
+
+	public static void main(String[] args) {
+		try {
+			new TestClient().run(args);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+	class IncomingReader implements Runnable {
+		public void run() {
+			String message;
+			try {
+				while ((message = reader.readLine()) != null) {
+						text.setText(message + "\n");
+						
+				}
+			} catch (IOException ex) {
+				ex.printStackTrace();
+			}
+		}
+	}
 }
