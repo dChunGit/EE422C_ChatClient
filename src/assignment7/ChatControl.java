@@ -7,6 +7,7 @@ import java.io.PrintWriter;
 import java.net.Socket;
 
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.event.Event;
@@ -29,9 +30,9 @@ import javafx.stage.Stage;
 
 public class ChatControl extends Application{
 
-	private BufferedReader reader;
-	private PrintWriter writer;
-	private TextArea input, text;
+	private static BufferedReader reader;
+	private static PrintWriter writer;
+	private static TextArea input, text;
 	
 	public static void main(String[] args) {
     	try {
@@ -51,11 +52,8 @@ public class ChatControl extends Application{
 		@SuppressWarnings("resource")
 		Socket sock = new Socket("127.0.0.1", 4242);
 		InputStreamReader streamReader = new InputStreamReader(sock.getInputStream());
-		reader = new BufferedReader(streamReader);
-		writer = new PrintWriter(sock.getOutputStream());
-		if(writer == null) {
-			System.out.println("Null writer");
-		}
+		ChatControl.reader = new BufferedReader(streamReader);
+		ChatControl.writer = new PrintWriter(sock.getOutputStream());
 		System.out.println("networking established");
 		Thread readerThread = new Thread(new IncomingReader());
 		readerThread.start();
@@ -67,8 +65,8 @@ public class ChatControl extends Application{
 			String message;
 			try {
 				while ((message = reader.readLine()) != null) {
-					System.out.println(this.toString() + " " + message);
-					//text.appendText(message + "\n");
+					//System.out.println(this.toString() + " " + message);
+					ChatControl.text.appendText(message + "\n");
 				}
 			} catch (IOException ex) {
 				ex.printStackTrace();
@@ -118,7 +116,6 @@ public class ChatControl extends Application{
 	    });
 		
 
-		StackPane text_inputs = new StackPane();
 		header.getChildren().add(text);
 		
 		
@@ -139,20 +136,22 @@ public class ChatControl extends Application{
 	        			input.getText(), input.getPrefWidth()));
 	        }
 	    });
-		
+
+        sendMessage send_message = new sendMessage();
+        
 		input.addEventFilter(KeyEvent.KEY_PRESSED, new EventHandler<KeyEvent>() {
 		    @Override
 		    public void handle(KeyEvent ke) {
 		        if (ke.getCode().equals(KeyCode.ENTER)) {
 		        	String text = input.getText();
 		            System.out.println(text);
-		            if(writer == null) {
-		            	System.out.println("Null writer");
-		            }
-		        	writer.println(text);
-					writer.flush();
+		            send_message.set_Text(text);
+		            
+		            Thread message = new Thread(send_message);
+		            message.start();
+		            
 		            input.clear();
-
+		        	
 		            ke.consume();
 		        }
 		    }
@@ -164,10 +163,11 @@ public class ChatControl extends Application{
 
 			@Override
 			public void handle(Event event) {
-				// TODO Auto-generated method stub
-				writer.println(text.getText());
-				writer.flush();
-				text.setText("");
+	        	String text = input.getText();
+	            send_message.set_Text(text);
+	            Thread message = new Thread(send_message);
+	            message.start();
+	            input.clear();
 			}
 			
 		});
@@ -202,6 +202,20 @@ public class ChatControl extends Application{
 
 	}
 	
+	class sendMessage implements Runnable {
+
+	    private String text_field;
+	    
+	    public void set_Text(String text) {
+	    	this.text_field = text;
+	    }
+
+	    public void run() {
+	    	ChatControl.writer.println(text_field);
+	    	ChatControl.writer.flush();
+	    }
+	}
+
 	
 
 }
