@@ -38,6 +38,15 @@ public class ServerMain extends Observable {
 	                   " CHATS        TEXT     NOT NULL);"; 
 	      stmt.executeUpdate(sql);
 	      stmt.close();
+	      
+	      
+	      stmt = c.createStatement();
+	      sql = "CREATE TABLE IF NOT EXISTS USERS " +
+	    		"(ID TEXT PRIMARY KEY		NOT NULL," +
+	    		" ONLINE			TEXT	NOT NULL);";
+	      stmt.executeUpdate(sql);
+	      stmt.close();
+	      
 	      c.close();
 	      
 	    } catch ( Exception e ) {
@@ -56,6 +65,9 @@ public class ServerMain extends Observable {
 			Thread t = new Thread(new ClientHandler(clientSocket));
 			t.start();
 			this.addObserver(writer);
+			setChanged();
+			notifyObservers("update");
+
 			System.out.println("got a connection");
 		}
 	}
