@@ -26,13 +26,19 @@ public class ChatRoom_Observer extends PrintWriter implements Observer {
 			users_chat = parsed_expression[1];
 			update_users = parse(users_chat);
 		}
-		System.out.println(sending_name);
+		//System.out.println(sending_name);
 		
 		
 		if(update_users.contains(user_observer) || sending_name.equals("update") || sending_name.equals(user_observer)) {
 			if(parsed_expression.length > 2) {
-				System.out.println(parsed_expression[2]);
-				this.println(parsed_expression[2]);
+				String sending;
+				if(sending_name.equals(user_observer)) {
+					sending = "You: " + parsed_expression[2];
+				}else {
+					sending = sending_name + ": " + parsed_expression[2];
+				}
+				System.out.println(sending);
+				this.println(sending);
 				this.flush();
 			}else {
 				System.out.println(arg);
@@ -48,12 +54,12 @@ public class ChatRoom_Observer extends PrintWriter implements Observer {
 		int a = 0;
 		while(a + 6 < message.length()) {
 			String checkbeing = message.substring(a, a + 7);
-			System.out.println("Checkbeing: " + checkbeing);
+			//System.out.println("Checkbeing: " + checkbeing);
 			if(checkbeing.equals("BEGCHAT")) {
 				int ending = a;
 				String endcheck = checkbeing;
 				while(!endcheck.equals("ENDCHAT") && (ending+7) < message.length()) {
-					System.out.println("Endcheck: " + endcheck);
+					//System.out.println("Endcheck: " + endcheck);
 					ending++;
 					endcheck = message.substring(ending, ending + 7);
 				}

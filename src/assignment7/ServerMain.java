@@ -76,7 +76,7 @@ public class ServerMain extends Observable {
 			setChanged();
 			notifyObservers("update");
 
-			//System.out.println("got a connection");
+			System.out.println("got a connection");
 		}
 	}
 	
@@ -115,7 +115,9 @@ public class ServerMain extends Observable {
 					
 				}
 			} catch (IOException e) {
-				e.printStackTrace();
+				setChanged();
+				notifyObservers("update");
+				//e.printStackTrace();
 			}
 		}
 	}
