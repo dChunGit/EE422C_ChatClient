@@ -5,17 +5,32 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.sql.Connection;
+import java.sql.DriverManager;
 import java.util.Observable;
 
 
 public class ServerMain extends Observable {
 
 	public static void main(String[] args) {
+		setUpDatabase();
 		try {
 			new ServerMain().setUpNetworking();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+	}
+	
+	private static void setUpDatabase() {
+		Connection c = null;
+	    try {
+	      Class.forName("org.sqlite.JDBC");
+	      c = DriverManager.getConnection("jdbc:sqlite:users.db");
+	      System.out.println("Connection to SQLite has been established.");
+	    } catch ( Exception e ) {
+	      System.err.println( e.getClass().getName() + ": " + e.getMessage() );
+	      System.exit(0);
+	    }
 	}
 
 	private void setUpNetworking() throws Exception {
@@ -47,8 +62,10 @@ public class ServerMain extends Observable {
 			try {
 				while ((message = reader.readLine()) != null) {
 					System.out.println("server read "+message);
-					setChanged();
-					notifyObservers(message);
+					if(!message.contains("UserID")) {
+						setChanged();
+						notifyObservers(message);
+					}
 				}
 			} catch (IOException e) {
 				e.printStackTrace();
