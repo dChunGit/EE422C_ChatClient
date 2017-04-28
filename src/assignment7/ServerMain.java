@@ -7,6 +7,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.Statement;
 import java.util.Observable;
 
 
@@ -23,13 +24,26 @@ public class ServerMain extends Observable {
 	
 	private static void setUpDatabase() {
 		Connection c = null;
+		Statement stmt = null;
 	    try {
 	      Class.forName("org.sqlite.JDBC");
 	      c = DriverManager.getConnection("jdbc:sqlite:users.db");
 	      System.out.println("Connection to SQLite has been established.");
+	      
+	      stmt = c.createStatement();
+	      String sql = "CREATE TABLE IF NOT EXISTS USER_CLIENT " +
+	                   "(ID TEXT PRIMARY KEY     NOT NULL," +
+	                   " PASSWORD           TEXT    NOT NULL, " + 
+	                   " FRIENDS            TEXT     NOT NULL, " + 
+	                   " CHATS        TEXT     NOT NULL);"; 
+	      stmt.executeUpdate(sql);
+	      stmt.close();
+	      c.close();
+	      
 	    } catch ( Exception e ) {
-	      System.err.println( e.getClass().getName() + ": " + e.getMessage() );
-	      System.exit(0);
+	    	e.printStackTrace();
+	      //System.err.println( e.getClass().getName() + ": " + e.getMessage() );
+	      //System.exit(0);
 	    }
 	}
 
