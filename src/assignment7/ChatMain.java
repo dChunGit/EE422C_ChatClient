@@ -49,7 +49,8 @@ public class ChatMain extends Application{
 	private static Socket socket;
 	private static TextArea input, text;
 	private String username, password;
-	private ArrayList<String> personal_data;
+	private static ArrayList<String> personal_data;
+	private static ArrayList<String> chat_with_others;
 	private HBox online_box, offline_box;
 	private VBox threads_container, container;
 	private Label heading;
@@ -66,6 +67,7 @@ public class ChatMain extends Application{
 	}
 	
 	public void run(String[] args) throws Exception {
+		chat_with_others = new ArrayList<>();
 		personal_data = new ArrayList<>();
     	launch(args);
 	}
@@ -76,16 +78,16 @@ public class ChatMain extends Application{
 			InputStreamReader streamReader = new InputStreamReader(socket.getInputStream());
 			ChatMain.reader = new BufferedReader(streamReader);
 			ChatMain.writer = new PrintWriter(socket.getOutputStream());
-	    	ChatMain.writer.println("UserID-" + username + "-EndID");
+	    	ChatMain.writer.println(username);
 	    	ChatMain.writer.flush();
 	
 			if(personal_data == null) {
-				System.out.println("null");
+				//System.out.println("null");
 			}else {
-				System.out.println(personal_data.toString());
+				//System.out.println(personal_data.toString());
 			}
 			
-			System.out.println("networking established");
+			//System.out.println("networking established");
 			Thread readerThread = new Thread(new IncomingReader());
 			readerThread.start();
 		}else {
@@ -95,7 +97,7 @@ public class ChatMain extends Application{
 				ChatMain.writer.close();
 			}
 		}
-		//System.out.println("Setup finished");
+		////System.out.println("Setup finished");
 	}
 	
 	class IncomingReader implements Runnable {
@@ -103,7 +105,7 @@ public class ChatMain extends Application{
 			String message;
 			try {
 				while ((message = reader.readLine()) != null) {
-					//System.out.println(this.toString() + " " + message);
+					////System.out.println(this.toString() + " " + message);
 					if(message.contains("update")) {
 						ArrayList<String> users = getDatabase();
 						ArrayList<String> online_user_check = getOnline();
@@ -123,7 +125,7 @@ public class ChatMain extends Application{
 							user_icon_pane.add(user_icon_name, 0, 1);*/
 							Button user_button = new Button();
 							user_button.setText(users.get(a));
-							System.out.println(username);
+							////System.out.println(username);
 							if(online_user_check.contains(users.get(a)) && !users.get(a).equals(username)) {
 								Platform.runLater(new Runnable() {
 									   @Override
@@ -133,8 +135,9 @@ public class ChatMain extends Application{
 	
 												@Override
 												public void handle(Event event) {
-													System.out.println("Clicked");
+													////System.out.println("Clicked");
 													heading.setText("Chatting with: " + user_button.getText());
+													chat_with_others.add(user_button.getText());
 													try {
 														setUpChat(true);
 													} catch (Exception e) {
@@ -250,7 +253,7 @@ public class ChatMain extends Application{
 		    public void handle(KeyEvent ke) {
 		        if (ke.getCode().equals(KeyCode.ENTER)) {
 		        	String text = input.getText();
-		            System.out.println(text);
+		            ////System.out.println(text);
 		            send_message.set_Text(text);
 		            
 		            Thread message = new Thread(send_message);
@@ -298,7 +301,7 @@ public class ChatMain extends Application{
 
 			@Override
 			public void handle(Event event) {
-				System.out.println(visibility.getText());
+				////System.out.println(visibility.getText());
 				setStatus(false);
 				try {
 					setUpChat(false);
@@ -318,7 +321,7 @@ public class ChatMain extends Application{
 
 			@Override
 			public void handle(Event event) {
-				System.out.println(back_button.getText());
+				////System.out.println(back_button.getText());
 				if(back_button.getText().equals("Back")) {
 
 					container.setVisible(false);
@@ -372,9 +375,9 @@ public class ChatMain extends Application{
 						ArrayList<String> data = getDatabase();
 						personal_data = data;
 						if(personal_data == null) {
-							System.out.println("null");
+							//System.out.println("null");
 						}else {
-							System.out.println(personal_data.toString());
+							//System.out.println(personal_data.toString());
 						}
 						
 						heading.setText("Welcome: " + data.get(0));
@@ -404,7 +407,7 @@ public class ChatMain extends Application{
 										user_icon_pane.add(user_icon_name, 0, 1);*/
 										Button user_button = new Button();
 										user_button.setText(users.get(a));
-										System.out.println(username);
+										//System.out.println(username);
 										if(online_user_check.contains(users.get(a)) && !users.get(a).equals(username)) {
 											Platform.runLater(new Runnable() {
 												   @Override
@@ -414,8 +417,9 @@ public class ChatMain extends Application{
 				
 															@Override
 															public void handle(Event event) {
-																System.out.println("Clicked");
+																//System.out.println("Clicked");
 																heading.setText("Chatting with: " + user_button.getText());
+																chat_with_others.add(user_button.getText());
 																threads_container.setVisible(false);
 																try {
 																	setUpChat(true);
@@ -446,7 +450,7 @@ public class ChatMain extends Application{
 						controls.setContent(overview);
 						primaryStage.sizeToScene();
 					}else {
-						System.out.println("Duplicate Users");
+						//System.out.println("Duplicate Users");
 					}
 					
 				} catch (Exception e) {
@@ -464,16 +468,16 @@ public class ChatMain extends Application{
 
 			@Override
 			public void handle(Event event) {
-				System.out.println(user_name.getText());
-				System.out.println(password_field.getText());
+				//System.out.println(user_name.getText());
+				//System.out.println(password_field.getText());
 				
 				try {
 					ArrayList<String> data = getDatabase();
 					personal_data = data;
 					if(personal_data == null) {
-						System.out.println("null");
+						//System.out.println("null");
 					}else {
-						System.out.println(personal_data.toString());
+						//System.out.println(personal_data.toString());
 					}
 					
 					if(checkUsername(user_name.getText(), password_field.getText())) {
@@ -503,7 +507,7 @@ public class ChatMain extends Application{
 										user_icon_pane.add(user_icon_name, 0, 1);*/
 										Button user_button = new Button();
 										user_button.setText(users.get(a));
-										System.out.println(username);
+										//System.out.println(username);
 										if(online_user_check.contains(users.get(a)) && !users.get(a).equals(username)) {
 											Platform.runLater(new Runnable() {
 												   @Override
@@ -513,8 +517,9 @@ public class ChatMain extends Application{
 				
 															@Override
 															public void handle(Event event) {
-																System.out.println("Clicked");
+																//System.out.println("Clicked");
 																heading.setText("Chatting with: " + user_button.getText());
+																chat_with_others.add(user_button.getText());
 																threads_container.setVisible(false);
 																try {
 																	setUpChat(true);
@@ -544,7 +549,7 @@ public class ChatMain extends Application{
 						controls.setContent(overview);
 						primaryStage.sizeToScene();
 					}else {
-						System.out.println("Wrong sign-in");
+						//System.out.println("Wrong sign-in");
 					}
 				} catch (Exception e) {
 					// TODO Auto-generated catch block
@@ -630,14 +635,14 @@ public class ChatMain extends Application{
 	      Class.forName("org.sqlite.JDBC");
 	      c = DriverManager.getConnection("jdbc:sqlite:users.db");
 	      c.setAutoCommit(false);
-	      System.out.println("Opened database successfully - existing");
+	      //System.out.println("Opened database successfully - existing");
 	      
 
 	      stmt = c.createStatement();
 	      ResultSet rs = stmt.executeQuery( "SELECT * FROM USERS;" );
 	      while ( rs.next() ) {
 	         String name = rs.getString("ID");
-	         System.out.println(name);
+	         //System.out.println(name);
 	         String online_user = rs.getString("ONLINE");
 	         
 	         if(online_user.equals("online")) {
@@ -654,8 +659,8 @@ public class ChatMain extends Application{
 	    	e.printStackTrace();
 	    	System.exit(0);
 	    }
-	    System.out.println("Operation done successfully - online users");
-	    System.out.println(temp.toString());
+	    //System.out.println("Operation done successfully - online users");
+	    //System.out.println(temp.toString());
 	    return temp;
 	}
 	
@@ -666,7 +671,7 @@ public class ChatMain extends Application{
 	      Class.forName("org.sqlite.JDBC");
 	      c = DriverManager.getConnection("jdbc:sqlite:users.db");
 	      c.setAutoCommit(false);
-	      System.out.println("Opened database successfully");
+	      //System.out.println("Opened database successfully");
 	      ArrayList<String> current_users = getDatabase();
 	      if(current_users.contains(username)) {
 	    	  return false;
@@ -705,7 +710,7 @@ public class ChatMain extends Application{
 	      System.err.println( e.getClass().getName() + ": " + e.getMessage() );
 	      System.exit(0);
 	    }
-	    System.out.println("Records created successfully");
+	    //System.out.println("Records created successfully");
 	    return true;
 	}
 	
@@ -716,7 +721,7 @@ public class ChatMain extends Application{
 	      Class.forName("org.sqlite.JDBC");
 	      c = DriverManager.getConnection("jdbc:sqlite:users.db");
 	      c.setAutoCommit(false);
-	      System.out.println("Opened database successfully");
+	      //System.out.println("Opened database successfully");
 
 	      String sql = "UPDATE USERS set ONLINE = ? where ID=?;";
 
@@ -741,7 +746,7 @@ public class ChatMain extends Application{
 	      System.err.println( e.getClass().getName() + ": " + e.getMessage() );
 	      System.exit(0);
 	    }
-	    System.out.println("Records created successfully");
+	    //System.out.println("Records created successfully");
 	}
 	
 	private ArrayList<String> getDatabase() {
@@ -752,20 +757,20 @@ public class ChatMain extends Application{
 	      Class.forName("org.sqlite.JDBC");
 	      c = DriverManager.getConnection("jdbc:sqlite:users.db");
 	      c.setAutoCommit(false);
-	      System.out.println("Opened database successfully - existing");
+	      //System.out.println("Opened database successfully - existing");
 	      
 
 	      stmt = c.createStatement();
 	      ResultSet rs = stmt.executeQuery( "SELECT * FROM USER_CLIENT;" );
 	      while ( rs.next() ) {
 	         String name = rs.getString("ID");
-	         System.out.println(name);
+	         //System.out.println(name);
 	         String password = rs.getString("PASSWORD");
-	         System.out.println(password);
+	         //System.out.println(password);
 	         String friends = rs.getString("FRIENDS");
-	         System.out.println(friends);
+	         //System.out.println(friends);
 	         String chats = rs.getString("CHATS");
-	         System.out.println(chats);
+	         //System.out.println(chats);
 	         
 	         
 	         temp.add(name);
@@ -783,7 +788,7 @@ public class ChatMain extends Application{
 	    	e.printStackTrace();
 	    	System.exit(0);
 	    }
-	    System.out.println("Operation done successfully");
+	    //System.out.println("Operation done successfully");
 	    return temp;
 	}
 	
@@ -796,7 +801,13 @@ public class ChatMain extends Application{
 	    }
 
 	    public void run() {
-	    	ChatMain.writer.println(text_field);
+	    	System.out.println("Sending message: " + text_field);
+	    	String message = username+":";
+			for(int a = 0; a < chat_with_others.size(); a++) {
+				message += "BEGCHAT" + chat_with_others.get(a) + "ENDCHAT";
+			}
+			message += ":" + this.text_field;
+	    	ChatMain.writer.println(message);
 	    	ChatMain.writer.flush();
 	    }
 	}

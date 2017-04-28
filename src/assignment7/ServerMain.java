@@ -8,12 +8,16 @@ import java.net.Socket;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.Observable;
 
 
 public class ServerMain extends Observable {
+	
+	private static ArrayList<ClientHandler> users_active;
 
 	public static void main(String[] args) {
+		users_active = new ArrayList<>();
 		setUpDatabase();
 		try {
 			new ServerMain().setUpNetworking();
@@ -28,7 +32,7 @@ public class ServerMain extends Observable {
 	    try {
 	      Class.forName("org.sqlite.JDBC");
 	      c = DriverManager.getConnection("jdbc:sqlite:users.db");
-	      System.out.println("Connection to SQLite has been established.");
+	      //System.out.println("Connection to SQLite has been established.");
 	      
 	      stmt = c.createStatement();
 	      String sql = "CREATE TABLE IF NOT EXISTS USER_CLIENT " +
@@ -61,16 +65,34 @@ public class ServerMain extends Observable {
 		ServerSocket serverSock = new ServerSocket(4242);
 		while (true) {
 			Socket clientSocket = serverSock.accept();
-			ChatRoom_Observer writer = new ChatRoom_Observer(clientSocket.getOutputStream());
-			Thread t = new Thread(new ClientHandler(clientSocket));
+			String user = log_user(clientSocket);
+			//System.out.println("Observer User: "+user);
+			ChatRoom_Observer writer = new ChatRoom_Observer(clientSocket.getOutputStream(), user);
+			ClientHandler user_detected = new ClientHandler(clientSocket);
+			users_active.add(user_detected);
+			Thread t = new Thread(user_detected);
 			t.start();
 			this.addObserver(writer);
 			setChanged();
 			notifyObservers("update");
 
-			System.out.println("got a connection");
+			//System.out.println("got a connection");
 		}
 	}
+	
+	private String log_user(Socket client) {
+		try {
+			BufferedReader input = new BufferedReader(new InputStreamReader(client.getInputStream()));
+	        return input.readLine();
+
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return null;
+
+	}
+	
 	class ClientHandler implements Runnable {
 		private BufferedReader reader;
 
@@ -87,11 +109,10 @@ public class ServerMain extends Observable {
 			String message;
 			try {
 				while ((message = reader.readLine()) != null) {
-					System.out.println("server read "+message);
-					if(!message.contains("UserID")) {
-						setChanged();
-						notifyObservers(message);
-					}
+					//System.out.println("server read "+message);
+					setChanged();
+					notifyObservers(message);
+					
 				}
 			} catch (IOException e) {
 				e.printStackTrace();
