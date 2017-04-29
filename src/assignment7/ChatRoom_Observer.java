@@ -31,12 +31,7 @@ public class ChatRoom_Observer extends PrintWriter implements Observer {
 		
 		if(update_users.contains(user_observer) || sending_name.equals("update") || sending_name.equals(user_observer)) {
 			if(parsed_expression.length > 2) {
-				String sending;
-				if(sending_name.equals(user_observer)) {
-					sending = "You: " + parsed_expression[2];
-				}else {
-					sending = sending_name + ": " + parsed_expression[2];
-				}
+				String sending = sending_name + ": " + parsed_expression[2];
 				System.out.println(sending);
 				this.println(sending);
 				this.flush();

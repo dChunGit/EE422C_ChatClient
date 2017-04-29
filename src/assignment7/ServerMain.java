@@ -53,7 +53,8 @@ public class ServerMain extends Observable {
 	      stmt = c.createStatement();
 	      sql = "CREATE TABLE IF NOT EXISTS GROUPS " +
 	    		"(ID TEXT PRIMARY KEY		NOT NULL," +
-	    		" USERS			TEXT	NOT NULL);";
+	    		" USERS			TEXT	NOT NULL," +
+	    		" CHATLOG		TEXT	NOT NULL);";
 	      stmt.executeUpdate(sql);
 	      stmt.close();
 	      
@@ -66,10 +67,33 @@ public class ServerMain extends Observable {
 	      //System.exit(0);
 	    }
 	}
+	
+	class update_runnable implements Runnable {
+		@Override
+		public void run() {
+			while(true) {
+				setChanged();
+				notifyObservers("update");
+				try {
+					Thread.sleep(1000);
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+		
+		}
+	}
 
 	private void setUpNetworking() throws Exception {
 		@SuppressWarnings("resource")
 		ServerSocket serverSock = new ServerSocket(4242);
+		//update_runnable run_update = new update_runnable();
+		
+		
+		/*Thread update_thread = new Thread(run_update);
+		update_thread.start();*/
+		
 		while (true) {
 			Socket clientSocket = serverSock.accept();
 			String user = log_user(clientSocket);
@@ -85,6 +109,8 @@ public class ServerMain extends Observable {
 
 			System.out.println("got a connection");
 		}
+		
+		
 	}
 	
 	private String log_user(Socket client) {
@@ -119,6 +145,12 @@ public class ServerMain extends Observable {
 					//System.out.println("server read "+message);
 					setChanged();
 					notifyObservers(message);
+					try {
+						Thread.sleep(500);
+					} catch (InterruptedException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
 					
 				}
 			} catch (IOException e) {
