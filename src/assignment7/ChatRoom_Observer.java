@@ -46,6 +46,9 @@ public class ChatRoom_Observer extends PrintWriter implements Observer {
 				this.println(arg); //writer.println(arg);
 				this.flush(); //writer.flush();
 			}
+		}else if(sending_name.equals("failure")) {
+			this.println(sending_name);
+			this.flush();
 		}
 	}
 	

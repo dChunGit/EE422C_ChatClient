@@ -46,6 +46,7 @@ import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
+import javafx.stage.WindowEvent;
 
 public class ChatMain extends Application{
 
@@ -61,6 +62,9 @@ public class ChatMain extends Application{
 	private static HBox online_box, offline_box, group_box;
 	private static VBox threads_container, container;
 	private static Label heading;
+	private static Stage primaryStage;
+	private static StackPane overview;
+	private static ScrollPane controls;
 	
 	public static void main(String[] args) {
     	try {
@@ -80,17 +84,23 @@ public class ChatMain extends Application{
     	launch(args);
 	}
 	
+	
+	
 	private void setUpChat(boolean toggle) throws Exception {
 		if(toggle) {
+			System.out.println(ip);
 			ChatMain.socket = new Socket(ip, 4242);
 			InputStreamReader streamReader = new InputStreamReader(socket.getInputStream());
 			ChatMain.reader = new BufferedReader(streamReader);
 			ChatMain.writer = new PrintWriter(socket.getOutputStream());
 	    	ChatMain.writer.println(username);
 	    	ChatMain.writer.flush();
-	    	
-	    	ChatMain.writer.println("update");
+	    	ChatMain.writer.println(password);
 	    	ChatMain.writer.flush();
+	    	
+	    	
+	    	//ChatMain.writer.println("update");
+	    	//ChatMain.writer.flush();
 	
 			if(personal_data == null) {
 				//System.out.println("null");
@@ -248,9 +258,28 @@ public class ChatMain extends Application{
 			try {
 				while ((message = reader.readLine()) != null) {
 					////System.out.println(this.toString() + " " + message);
-					if(message.contains("update")) {
-						updateUsers();
-					}else {
+					if(message.equals("update")) {
+						setStatus(true);
+						Platform.runLater(new Runnable() {
+							@Override
+							public void run() {
+								primaryStage.setTitle(username);							
+								controls.setContent(overview);
+								primaryStage.sizeToScene();
+							}
+						});
+						
+					}else if(message.equals("failure")) {
+						try {
+							setUpChat(false);
+							
+						} catch (Exception e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+					
+					}
+					else {
 						//updateChatlog(message);
 						String sentfrom[] = message.split(":");
 						System.out.println(Arrays.toString(sentfrom));
@@ -284,8 +313,9 @@ public class ChatMain extends Application{
 	}
 
 	@Override
-	public void start(Stage primaryStage) throws Exception {
+	public void start(Stage stage) throws Exception {
 		int big_font = 32;
+		ChatMain.primaryStage = stage;
 		
 		primaryStage.setTitle("Chat Client");
         Rectangle2D primScreenBounds = Screen.getPrimary().getVisualBounds();
@@ -377,7 +407,7 @@ public class ChatMain extends Application{
          * Actual Chat Window Interface
          * 
          */
-        ScrollPane controls = new ScrollPane();
+        controls = new ScrollPane();
 		container = new VBox();
 		BorderPane sign_in = new BorderPane();
 
@@ -549,7 +579,7 @@ public class ChatMain extends Application{
 		 * Set outer stackpane for children
 		 * 
 		 */
-		StackPane overview = new StackPane();
+		overview = new StackPane();
 		overview.getChildren().add(container);
 		overview.getChildren().add(threads_container);
 		
@@ -578,7 +608,40 @@ public class ChatMain extends Application{
 
 			@Override
 			public void handle(Event event) {
+				
+				//System.out.println(user_name.getText());
+				//System.out.println(password_field.getText());
+				
 				try {
+					ArrayList<String> data = getNames(getDatabase());
+					//System.out.println(data.toString());
+					personal_data = data;
+					passwords = getPasswords(getDatabase());
+					ip = ipAddress.getText();
+					username = user_name.getText();
+					password = password_field.getText();
+					password_field.setText("");
+					
+					setUpChat(true);
+					/*int status_login = checkUsername(user_name.getText(), password_field.getText());
+					if(status_login == 1) {
+						password_field.setText("");
+						
+						setUpChat(true);
+						
+					}else if(status_login == 0){
+						wrong_info.setVisible(true);
+						wrong_info.setText("Incorrect Username or Password");
+						//System.out.println("Wrong sign-in");
+					}else {
+						wrong_info.setVisible(true);
+						wrong_info.setText("User already signed in");
+					}*/
+				} catch (Exception e) {
+					// TODO Auto-generated catch block
+					//e.printStackTrace();
+				}
+				/*try {
 					ip = ipAddress.getText();
 					username = user_name.getText();
 					password = password_field.getText();
@@ -611,7 +674,7 @@ public class ChatMain extends Application{
 				} catch (Exception e) {
 					// TODO Auto-generated catch block
 					//e.printStackTrace();
-				}
+				}*/
 				
 			}
 			
@@ -632,17 +695,16 @@ public class ChatMain extends Application{
 					personal_data = data;
 					passwords = getPasswords(getDatabase());
 					ip = ipAddress.getText();
-					int status_login = checkUsername(user_name.getText(), password_field.getText());
+					username = user_name.getText();
+					password = password_field.getText();
+					password_field.setText("");
+					
+					setUpChat(true);
+					/*int status_login = checkUsername(user_name.getText(), password_field.getText());
 					if(status_login == 1) {
 						password_field.setText("");
-						setStatus(true);
 						setUpChat(true);
-						primaryStage.setTitle(username);
-
-						updateUsers();
 						
-						controls.setContent(overview);
-						primaryStage.sizeToScene();
 					}else if(status_login == 0){
 						wrong_info.setVisible(true);
 						wrong_info.setText("Incorrect Username or Password");
@@ -650,7 +712,7 @@ public class ChatMain extends Application{
 					}else {
 						wrong_info.setVisible(true);
 						wrong_info.setText("User already signed in");
-					}
+					}*/
 				} catch (Exception e) {
 					// TODO Auto-generated catch block
 					//e.printStackTrace();
@@ -695,37 +757,30 @@ public class ChatMain extends Application{
 		controls.setContent(sign_in);
 		
 		
-		
-		
-		
 		/*
 		 * 
 		 * Set Scene
 		 * 
 		 */
+		primaryStage.setOnCloseRequest(new EventHandler<WindowEvent>() {
+			@Override
+			public void handle(WindowEvent e) {
+				setStatus(false);
+				try {
+					setUpChat(false);
+				} catch (Exception f) {
+					// TODO Auto-generated catch block
+					//e.printStackTrace();
+				}
+			}
+		});
+		
 		Scene scene1 = new Scene(controls);
 		primaryStage.setScene(scene1);
 		primaryStage.show();
 
 
 
-	}
-	
-	private int checkUsername(String user, String pass) {
-		//check username exists
-		//check password
-		ArrayList<String> online_users = getOnline(true);
-		//System.out.println(personal_data.toString());
-		//System.out.println(passwords.toString());
-		if(personal_data.contains(user) && passwords.contains(pass) && !online_users.contains(user) ) {
-			username = user;
-			password = pass;
-			return 1;
-		}else if(online_users.contains(user)) {
-			return -1;
-		}
-		//getDatabase();
-		return 0;
 	}
 	
 	private ArrayList<String> getOnline(boolean online_check) {
@@ -766,56 +821,6 @@ public class ChatMain extends Application{
 	    //System.out.println("Operation done successfully - online users");
 	    //System.out.println(temp.toString());
 	    return temp;
-	}
-	
-	private boolean addNewUser() {
-		Connection c = null;
-	    //Statement stmt = null;
-	    try {
-	      Class.forName("org.sqlite.JDBC");
-	      c = DriverManager.getConnection("jdbc:sqlite:users.db");
-	      c.setAutoCommit(false);
-	      //System.out.println("Opened database successfully");
-	      ArrayList<String> current_users = getNames(getDatabase());
-	      if(current_users.contains(username)) {
-	    	  return false;
-	      }
-
-	      //stmt = c.createStatement();
-	      String sql = "INSERT INTO USER_CLIENT (ID,PASSWORD,FRIENDS,CHATS) " +
-	                   "VALUES (?, ?, ?, ? );";
-	  
-	      PreparedStatement ps = c.prepareStatement(sql);
-	      ps.setString(1, username);
-	      ps.setString(2, password);
-	      ps.setString(3, "");
-	      ps.setString(4, "");
-	      
-	      ps.executeUpdate();
-	      
-	      ps.close();
-	      
-	      sql = "INSERT INTO USERS (ID,ONLINE) " +
-                  "VALUES (?, ? );";
- 
-	      ps = c.prepareStatement(sql);
-	      ps.setString(1, username);
-	      ps.setString(2, "online");
-	     
-	      ps.executeUpdate();
-	     
-	      ps.close();
-
-	      
-	      //stmt.close();
-	      c.commit();
-	      c.close();
-	    } catch ( Exception e ) {
-	      System.err.println( e.getClass().getName() + ": " + e.getMessage() );
-	      System.exit(0);
-	    }
-	    //System.out.println("Records created successfully");
-	    return true;
 	}
 	
 	private void setStatus(boolean status) {
