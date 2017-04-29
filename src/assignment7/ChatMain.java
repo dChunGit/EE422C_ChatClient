@@ -54,6 +54,7 @@ public class ChatMain extends Application{
 	private static Socket socket;
 	private static TextArea input, text;
 	private static String username, password, group_name = "", chat_user = "";
+	private static String ip = "127.0.0.1";
 	private static ArrayList<String> personal_data;
 	private static ArrayList<String> passwords;
 	private static ArrayList<String> chat_with_others;
@@ -81,7 +82,7 @@ public class ChatMain extends Application{
 	
 	private void setUpChat(boolean toggle) throws Exception {
 		if(toggle) {
-			ChatMain.socket = new Socket("127.0.0.1", 4242);
+			ChatMain.socket = new Socket(ip, 4242);
 			InputStreamReader streamReader = new InputStreamReader(socket.getInputStream());
 			ChatMain.reader = new BufferedReader(streamReader);
 			ChatMain.writer = new PrintWriter(socket.getOutputStream());
@@ -559,6 +560,8 @@ public class ChatMain extends Application{
 		 * User Sign In Interface
 		 * 
 		 */
+		TextField ipAddress = new TextField();
+		ipAddress.setPromptText("Enter IP Address");
 		TextField user_name = new TextField();
 		user_name.setPromptText("Username");
 		PasswordField password_field = new PasswordField();
@@ -576,6 +579,7 @@ public class ChatMain extends Application{
 			@Override
 			public void handle(Event event) {
 				try {
+					ip = ipAddress.getText();
 					username = user_name.getText();
 					password = password_field.getText();
 					if(addNewUser()) {
@@ -627,6 +631,7 @@ public class ChatMain extends Application{
 					//System.out.println(data.toString());
 					personal_data = data;
 					passwords = getPasswords(getDatabase());
+					ip = ipAddress.getText();
 					int status_login = checkUsername(user_name.getText(), password_field.getText());
 					if(status_login == 1) {
 						password_field.setText("");
@@ -671,12 +676,14 @@ public class ChatMain extends Application{
 		
 		GridPane authenticate = new GridPane();
 		authenticate.add(welcome_stack, 0, 0);
-		authenticate.add(user_name, 0, 1);
-		authenticate.add(password_field, 0, 2);
-		authenticate.add(wrong_info, 0, 3);
-		authenticate.add(options, 0, 4);
+		authenticate.add(ipAddress, 0, 1);
+		authenticate.add(user_name, 0, 2);
+		authenticate.add(password_field, 0, 3);
+		authenticate.add(wrong_info, 0, 4);
+		authenticate.add(options, 0, 5);
 		GridPane.setMargin(welcome_stack, new Insets(10, 20, 50, 20));
-		GridPane.setMargin(user_name, new Insets(10, 20, 50, 20));
+		GridPane.setMargin(ipAddress, new Insets(10, 20, 50, 20));
+		GridPane.setMargin(user_name, new Insets(0, 20, 0, 20));
 		GridPane.setMargin(password_field, new Insets(0, 20, 0, 20));
 		GridPane.setMargin(wrong_info, new Insets(0, 20, 50, 20));
 		GridPane.setMargin(options, new Insets(0, 20, 50, 20));
