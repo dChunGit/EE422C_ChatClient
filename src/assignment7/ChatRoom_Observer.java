@@ -3,6 +3,7 @@ package assignment7;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Observable;
 import java.util.Observer;
 
@@ -19,6 +20,7 @@ public class ChatRoom_Observer extends PrintWriter implements Observer {
 	public void update(Observable o, Object arg) {
 		String[] parsed_expression = ((String) arg).split(":");
 		String sending_name = parsed_expression[0];
+		System.out.println(Arrays.toString(parsed_expression));
 		String users_chat;
 		ArrayList<String> update_users = new ArrayList<>();
 		
@@ -30,9 +32,13 @@ public class ChatRoom_Observer extends PrintWriter implements Observer {
 		
 		
 		if(update_users.contains(user_observer) || sending_name.equals("update") || sending_name.equals(user_observer)) {
+			String sending = "";
 			if(parsed_expression.length > 2) {
-				String sending = sending_name + ": " + parsed_expression[2];
-				System.out.println(sending);
+				sending = sending_name + ": " + parsed_expression[2];
+				if(parsed_expression.length > 3) {
+					sending += ":" + parsed_expression[3];
+				}
+				//System.out.println(sending);
 				this.println(sending);
 				this.flush();
 			}else {

@@ -250,18 +250,26 @@ public class ChatMain extends Application{
 						updateUsers();
 					}else {
 						//updateChatlog(message);
-						String sentfrom = message.split(":")[0];
-						if(chat_with_others.contains(sentfrom) || sentfrom.equals(username)) {
+						String sentfrom[] = message.split(":");
+						System.out.println(Arrays.toString(sentfrom));
+						if(chat_with_others.contains(sentfrom[0]) || sentfrom[0].equals(username)) {
 							System.out.println("Updating: " + group_name);
 							//group_name = "";
 							if(!group_name.equals("")) {
-								System.out.println("Correct");
-								updateGrouplog(message);
-								restoreGrouplog();
+								if(sentfrom.length == 3) {
+									if(sentfrom[2].equals(group_name)) {
+										System.out.println("Correct");
+										message = sentfrom[0] + sentfrom[1];
+										updateGrouplog(message);
+										restoreGrouplog();
+									}
+								}
 							}else {
-								System.out.println("Incorrect");
-								updateChatlog(message);
-								restoreChat();
+								if(sentfrom.length < 3) {
+									System.out.println("Incorrect");
+									updateChatlog(message);
+									restoreChat();
+								}
 							}
 							//ChatMain.text.appendText(message + "\n");
 						}
