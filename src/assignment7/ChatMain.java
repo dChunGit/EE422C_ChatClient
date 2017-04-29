@@ -29,6 +29,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.CheckMenuItem;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuButton;
+import javafx.scene.control.PasswordField;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
@@ -505,7 +506,10 @@ public class ChatMain extends Application{
 		 * 
 		 */
 		TextField user_name = new TextField();
-		TextField password_field = new TextField();
+		user_name.setPromptText("Username");
+		PasswordField password_field = new PasswordField();
+		password_field.setPromptText("Password");
+
 		user_signed.setText(user_name.getText());
 		
 		Button new_user = new Button();
