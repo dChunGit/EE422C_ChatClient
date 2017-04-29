@@ -32,7 +32,6 @@ public class ServerMain extends Observable {
 	    try {
 	      Class.forName("org.sqlite.JDBC");
 	      c = DriverManager.getConnection("jdbc:sqlite:users.db");
-	      //System.out.println("Connection to SQLite has been established.");
 	      
 	      stmt = c.createStatement();
 	      String sql = "CREATE TABLE IF NOT EXISTS USER_CLIENT " +
@@ -51,7 +50,15 @@ public class ServerMain extends Observable {
 	      stmt.executeUpdate(sql);
 	      stmt.close();
 	      
+	      stmt = c.createStatement();
+	      sql = "CREATE TABLE IF NOT EXISTS GROUPS " +
+	    		"(ID TEXT PRIMARY KEY		NOT NULL," +
+	    		" USERS			TEXT	NOT NULL);";
+	      stmt.executeUpdate(sql);
+	      stmt.close();
+	      
 	      c.close();
+	      System.out.println("Connection to SQLite has been established.");
 	      
 	    } catch ( Exception e ) {
 	    	e.printStackTrace();
