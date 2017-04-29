@@ -41,6 +41,7 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.stage.Screen;
@@ -287,7 +288,7 @@ public class ChatMain extends Application{
 		
 		primaryStage.setTitle("Chat Client");
         Rectangle2D primScreenBounds = Screen.getPrimary().getVisualBounds();
-        
+		Text wrong_info = new Text();
 
 		/*
 		 * 
@@ -505,6 +506,7 @@ public class ChatMain extends Application{
 				}
 				username = "";
 				password = "";
+				wrong_info.setVisible(false);
 				controls.setContent(sign_in);
 				primaryStage.sizeToScene();
 			}
@@ -561,6 +563,9 @@ public class ChatMain extends Application{
 		user_name.setPromptText("Username");
 		PasswordField password_field = new PasswordField();
 		password_field.setPromptText("Password");
+		wrong_info.setText("Incorrect Username or Password");
+		wrong_info.setVisible(false);
+		wrong_info.setFill(Color.RED);
 
 		user_signed.setText(user_name.getText());
 		
@@ -595,6 +600,7 @@ public class ChatMain extends Application{
 						controls.setContent(overview);
 						primaryStage.sizeToScene();
 					}else {
+						wrong_info.setText("Username already exists");
 						//System.out.println("Duplicate Users");
 					}
 					
@@ -621,8 +627,8 @@ public class ChatMain extends Application{
 					//System.out.println(data.toString());
 					personal_data = data;
 					passwords = getPasswords(getDatabase());
-					
-					if(checkUsername(user_name.getText(), password_field.getText())) {
+					int status_login = checkUsername(user_name.getText(), password_field.getText());
+					if(status_login == 1) {
 						password_field.setText("");
 						setStatus(true);
 						setUpChat(true);
@@ -632,8 +638,13 @@ public class ChatMain extends Application{
 						
 						controls.setContent(overview);
 						primaryStage.sizeToScene();
+					}else if(status_login == 0){
+						wrong_info.setVisible(true);
+						wrong_info.setText("Incorrect Username or Password");
+						//System.out.println("Wrong sign-in");
 					}else {
-						System.out.println("Wrong sign-in");
+						wrong_info.setVisible(true);
+						wrong_info.setText("User already signed in");
 					}
 				} catch (Exception e) {
 					// TODO Auto-generated catch block
@@ -662,12 +673,15 @@ public class ChatMain extends Application{
 		authenticate.add(welcome_stack, 0, 0);
 		authenticate.add(user_name, 0, 1);
 		authenticate.add(password_field, 0, 2);
-		authenticate.add(options, 0, 3);
+		authenticate.add(wrong_info, 0, 3);
+		authenticate.add(options, 0, 4);
 		GridPane.setMargin(welcome_stack, new Insets(10, 20, 50, 20));
 		GridPane.setMargin(user_name, new Insets(10, 20, 50, 20));
-		GridPane.setMargin(password_field, new Insets(0, 20, 50, 20));
+		GridPane.setMargin(password_field, new Insets(0, 20, 0, 20));
+		GridPane.setMargin(wrong_info, new Insets(0, 20, 50, 20));
 		GridPane.setMargin(options, new Insets(0, 20, 50, 20));
 		GridPane.setHalignment(options, HPos.CENTER);
+		GridPane.setHalignment(wrong_info, HPos.CENTER);
 		BorderPane.setAlignment(authenticate, Pos.CENTER);
 		sign_in.setCenter(authenticate);
 		
@@ -690,7 +704,7 @@ public class ChatMain extends Application{
 
 	}
 	
-	private boolean checkUsername(String user, String pass) {
+	private int checkUsername(String user, String pass) {
 		//check username exists
 		//check password
 		ArrayList<String> online_users = getOnline(true);
@@ -699,10 +713,12 @@ public class ChatMain extends Application{
 		if(personal_data.contains(user) && passwords.contains(pass) && !online_users.contains(user) ) {
 			username = user;
 			password = pass;
-			return true;
+			return 1;
+		}else if(online_users.contains(user)) {
+			return -1;
 		}
 		//getDatabase();
-		return false;
+		return 0;
 	}
 	
 	private ArrayList<String> getOnline(boolean online_check) {
