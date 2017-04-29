@@ -99,6 +99,7 @@ public class ChatMain extends Application{
 		}else {
 			if(socket!=null) {
 				setStatus(false);
+				System.out.println("socket closed on: " + username);
 				ChatMain.writer.println("update");
 				ChatMain.writer.flush();
 				socket.close();
@@ -209,6 +210,7 @@ public class ChatMain extends Application{
 										// TODO Auto-generated catch block
 										//e.printStackTrace();
 									}
+									restoreChat();
 									threads_container.setVisible(false);
 									container.setVisible(true);
 								}
@@ -240,6 +242,7 @@ public class ChatMain extends Application{
 						//updateChatlog(message);
 						String sentfrom = message.split(":")[0];
 						if(chat_with_others.contains(sentfrom) || sentfrom.equals("You")) {
+							updateChatlog(message);
 							ChatMain.text.appendText(message + "\n");
 						}
 					}
@@ -400,7 +403,7 @@ public class ChatMain extends Application{
 		        	String text = input.getText();
 		            ////System.out.println(text);
 		            send_message.set_Text(text);
-		            
+		            //updateChatlog(text);
 		            Thread message = new Thread(send_message);
 		            message.start();
 		            
@@ -419,6 +422,7 @@ public class ChatMain extends Application{
 			public void handle(Event event) {
 	        	String text = input.getText();
 	            send_message.set_Text(text);
+	            //updateChatlog(text);
 	            Thread message = new Thread(send_message);
 	            message.start();
 	            input.clear();
@@ -472,6 +476,7 @@ public class ChatMain extends Application{
 				if(back_button.getText().equals("Back")) {
 					chat_with_others.clear();
 					input.setText("");
+					text.setText("");
 					updateUsers();
 					container.setVisible(false);
 					threads_container.setVisible(true);
@@ -537,16 +542,7 @@ public class ChatMain extends Application{
 						setUpChat(true);
 						primaryStage.setTitle(username);
 
-						
-						Thread update_users_thread = new Thread(new Runnable() {
-							@Override
-							public void run() {
-								boolean update = true;
-								updateUsers();
-							}
-						});
-						
-						update_users_thread.start();
+						updateUsers();
 						
 						setStatus(true);
 						controls.setContent(overview);
@@ -585,15 +581,7 @@ public class ChatMain extends Application{
 						setUpChat(true);
 						primaryStage.setTitle(username);
 
-						Thread update_users_thread = new Thread(new Runnable() {
-							@Override
-							public void run() {
-								updateUsers();
-							}
-						});
-						
-						update_users_thread.start();
-						
+						updateUsers();
 						
 						controls.setContent(overview);
 						primaryStage.sizeToScene();
@@ -805,7 +793,7 @@ public class ChatMain extends Application{
 	      //System.out.println("Opened database successfully");
 	      ArrayList<String> database = getNames(getDatabase());
 
-	      String sql = "UPDATE USERS set CHATS = ? where ID=?;";
+	      String sql = "UPDATE USER_CLIENT set CHATS = ? where ID=?;";
 
 	      PreparedStatement ps = c.prepareStatement(sql);
 	      ps = c.prepareStatement(sql);
@@ -815,13 +803,16 @@ public class ChatMain extends Application{
 	      while(a < database.size() && !found) {
 	    	  if(database.get(a).equals(username)) {
 	    		  found = true;
+	    	  }else {
+	    		  a++;
 	    	  }
-	    	  a++;
 	      }
-	      String chats = database.get(a+3);
+	      ArrayList<String> chatlog = getDatabase().get(a);
+	      String chats = chatlog.get(3);
 	      for(int b = 0; b < chat_with_others.size(); b++) {
-				chats += "USERID."+chat_with_others.get(b)+"."+text+":";
+				chats += "USERID."+chat_with_others.get(b)+"."+text+"-";
 		  }
+	      System.out.println(chats);
 	      
     	  ps.setString(1, chats);
 	      ps.setString(2, username);
@@ -835,34 +826,46 @@ public class ChatMain extends Application{
 	      c.commit();
 	      c.close();
 	    } catch ( Exception e ) {
-	      System.err.println( e.getClass().getName() + ": " + e.getMessage() );
+	    	e.printStackTrace();
 	      System.exit(0);
 	    }
 	    //System.out.println("Records created successfully");
 	}
 	
-	private ArrayList<String[]> retrieveHistory() {
+	private void restoreChat() {
+		ArrayList<String> chatlogs = retrieveHistory();
+		for(int a = 0; a < chatlogs.size(); a++) {
+			text.appendText(chatlogs.get(a) + "\n");
+			System.out.println(chatlogs.get(a));
+		}
+	}
+	
+	private ArrayList<String> retrieveHistory() {
 		ArrayList<String> database = getNames(getDatabase());
+	    ArrayList<String> chat_logs = new ArrayList<>();
 		int a = 0;
 		boolean found = false;
 		while(a < database.size() && !found) {
 	    	 if(database.get(a).equals(username)) {
 	    		 found = true;
+	    	 }else {
+		    	 a++;
 	    	 }
-	    	 a++;
 	    }
-	    String chats = database.get(a+3);
-	    String[] threads = chats.split(":");
-	    String[] senders = new String[threads.length];
-	    String[] messages = new String[threads.length];
+        ArrayList<String> chatlog = getDatabase().get(a);
+        String chats = chatlog.get(3);
+    	System.out.println("Chats: " + chats);
+	    String[] threads = chats.split("-");
+    	System.out.println("Thread array: " + Arrays.toString(threads));
 	    for(int b = 0; b < threads.length; b++) {
-	    	String[] parser = threads[b].split(".");
-	    	senders[b] = parser[1];
-	    	messages[b] = parser[2];
+		    String messages = "";
+	    	String temp = threads[b];
+	    	System.out.println("Parsed string: " + temp);
+	    	String[] parser = temp.split("\\.");
+	    	messages = parser[2];
+	    	System.out.println("Parsed array: " + Arrays.toString(parser));
+		    chat_logs.add(messages);
 	    }
-	    ArrayList<String[]> chat_logs = new ArrayList<>();
-	    chat_logs.add(senders);
-	    chat_logs.add(messages);
 	    
 	    return chat_logs;
 	}
