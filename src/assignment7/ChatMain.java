@@ -56,15 +56,18 @@ public class ChatMain extends Application{
 	private static TextArea input, text;
 	private static String username, password, group_name = "", chat_user = "";
 	private static String ip = "127.0.0.1";
+	private static ArrayList<ArrayList<String>> database;
 	private static ArrayList<String> personal_data;
 	private static ArrayList<String> passwords;
-	private static ArrayList<String> chat_with_others;
+	private static ArrayList<String> chat_with_others, online_users, offline_users;
 	private static HBox online_box, offline_box, group_box;
 	private static VBox threads_container, container;
 	private static Label heading;
 	private static Stage primaryStage;
 	private static StackPane overview;
 	private static ScrollPane controls;
+	private static TextField user_name, ipAddress;
+	private static PasswordField password_field;
 	
 	public static void main(String[] args) {
     	try {
@@ -88,8 +91,8 @@ public class ChatMain extends Application{
 	
 	private void setUpChat(boolean toggle) throws Exception {
 		if(toggle) {
-			System.out.println(ip);
-			ChatMain.socket = new Socket(ip, 4242);
+			//System.outprintln(ip);
+			ChatMain.socket = new Socket("127.0.0.1", 4242);
 			InputStreamReader streamReader = new InputStreamReader(socket.getInputStream());
 			ChatMain.reader = new BufferedReader(streamReader);
 			ChatMain.writer = new PrintWriter(socket.getOutputStream());
@@ -103,18 +106,19 @@ public class ChatMain extends Application{
 	    	//ChatMain.writer.flush();
 	
 			if(personal_data == null) {
-				//System.out.println("null");
+				////System.outprintln("null");
 			}else {
-				//System.out.println(personal_data.toString());
+				////System.outprintln(personal_data.toString());
 			}
 			
-			//System.out.println("networking established");
+			////System.outprintln("networking established");
 			Thread readerThread = new Thread(new IncomingReader());
 			readerThread.start();
 		}else {
 			if(ChatMain.socket!=null) {
-				setStatus(false);
-				System.out.println("socket closed on: " + username);
+				ChatMain.writer.println("quit");
+				ChatMain.writer.flush();
+				//System.outprintln("socket closed on: " + username);
 				ChatMain.writer.println("update");
 				ChatMain.writer.flush();
 				ChatMain.socket.close();
@@ -122,7 +126,7 @@ public class ChatMain extends Application{
 				ChatMain.writer.close();
 			}
 		}
-		////System.out.println("Setup finished");
+		//////System.outprintln("Setup finished");
 	}
 	
 	private class groupUsers implements EventHandler<Event> {
@@ -132,13 +136,13 @@ public class ChatMain extends Application{
 		public groupUsers(ArrayList<String> members) { 
 			this.name = members.get(0);
 			this.members = parseMembers(members);
-			System.out.println("Group: " + this.members.toString());
+			//System.outprintln("Group: " + this.members.toString());
 		}
 		
 		private ArrayList<String> parseMembers(ArrayList<String> parse_array) {
-			System.out.println(parse_array.toString());
+			//System.outprintln(parse_array.toString());
 			String[] temp = parse_array.get(1).split(":");
-			System.out.println(Arrays.toString(temp));
+			//System.outprintln(Arrays.toString(temp));
 			ArrayList<String> members_parsed = new ArrayList<>();
 			
 			for(int a = 0; a < temp.length; a++) {
@@ -152,7 +156,9 @@ public class ChatMain extends Application{
 		public void handle(Event event) {
 			group_name = name;
 			heading.setText("Chatting with: " + name);
-			restoreGrouplog();
+			ChatMain.writer.println("restoregrouplogs");
+			ChatMain.writer.flush();
+			//restoreGrouplog();
 			chat_with_others = members;
 			try {
 				setUpChat(true);
@@ -167,99 +173,19 @@ public class ChatMain extends Application{
 	}
 	
 	private void updateUsers() {
-		ArrayList<String> users = getNames(getDatabase());
-		ArrayList<String> online_user_check = getOnline(true);
-		ArrayList<String> offline_user_check = getOnline(false);
-		ArrayList<ArrayList<String>> group_check = getGroups();
-		System.out.println("Group_Check in update: " + group_check.toString());
-		Platform.runLater(new Runnable() {
-			   @Override
-			   public void run() {
-				   online_box.getChildren().clear();
-				   offline_box.getChildren().clear();
-				   group_box.getChildren().clear();
-			   }
-		});
-		
-		for(int a = 0; a < group_check.size(); a++) {
-			Button group_button = new Button();
-			group_button.setText(group_check.get(a).get(0));
-		
-			
-			/*if(group_check.get(a).contains(username)) {
-				
-			}*/
-			groupUsers listener = new groupUsers(group_check.get(a));
-			
-			Platform.runLater(new Runnable() {
-				@Override
-				public void run() {
-					group_box.getChildren().add(group_button);
-					group_button.setOnMouseClicked(listener);
-				}
-			});
-		}
-		
-		for(int a = 0; a < users.size(); a++) {
-			/*Label user_icon = new Label(users.get(a).substring(0, 1));
-
-			Text user_icon_name = new Text(users.get(a));
-			GridPane user_icon_pane = new GridPane();
-			user_icon_pane.add(user_icon, 0, 0);
-			user_icon_pane.add(user_icon_name, 0, 1);*/
-			Button user_button = new Button();
-			user_button.setText(users.get(a));
-			////System.out.println(username);
-			if(online_user_check.contains(users.get(a)) && !users.get(a).equals(username)) {
-				Platform.runLater(new Runnable() {
-					   @Override
-					   public void run() {
-						    online_box.getChildren().add(user_button);
-							user_button.setOnMouseClicked(new EventHandler<Event>() {
-
-								@Override
-								public void handle(Event event) {
-									////System.out.println("Clicked");
-									heading.setText("Chatting with: " + user_button.getText());
-									chat_user = user_button.getText();
-									chat_with_others.add(user_button.getText());
-									try {
-										setUpChat(true);
-									} catch (Exception e) {
-										// TODO Auto-generated catch block
-										//e.printStackTrace();
-									}
-									if(group_name.equals("")) {
-										restoreChat();
-									}
-									threads_container.setVisible(false);
-									container.setVisible(true);
-								}
-								
-							});
-						}
-					});
-			}else if(offline_user_check.contains(users.get(a)) && !users.get(a).equals(username)) {
-				Platform.runLater(new Runnable() {
-					@Override
-					public void run() {
-						offline_box.getChildren().add(user_button);
-						
-					}
-				});
-			}
-		}
+		ChatMain.writer.println("updateUsers");
+		ChatMain.writer.flush();
 	}
 	
 	class IncomingReader implements Runnable {
 		public void run() {
 			String message;
-			System.out.println("Read");
+			//System.outprintln("Read");
 			try {
 				while ((message = reader.readLine()) != null) {
-					////System.out.println(this.toString() + " " + message);
+					System.out.println(this.toString() + " " + message);
 					if(message.equals("update")) {
-						setStatus(true);
+						//setStatus(true);
 						Platform.runLater(new Runnable() {
 							@Override
 							public void run() {
@@ -269,6 +195,128 @@ public class ChatMain extends Application{
 							}
 						});
 						
+					}else if(message.contains("updateUsers")) {
+						System.out.println(message);
+						database = getDatabase(message.split("-")[1]);
+						online_users = getOnline(message.split("-")[2]);
+						offline_users = getOnline(message.split("-")[3]);
+						System.out.println(offline_users.toString());
+						ArrayList<String> users = getNames(database);
+						ArrayList<ArrayList<String>> group_check = new ArrayList<ArrayList<String>>();
+						try{
+							group_check = getDatabase(message.split("-")[4]);
+						}catch(Exception e){
+							
+						}
+						//System.outprintln("Group_Check in update: " + group_check.toString());
+						Platform.runLater(new Runnable() {
+							   @Override
+							   public void run() {
+								   online_box.getChildren().clear();
+								   offline_box.getChildren().clear();
+								   group_box.getChildren().clear();
+							   }
+						});
+						
+						for(int a = 0; a < group_check.size(); a++) {
+							Button group_button = new Button();
+							group_button.setText(group_check.get(a).get(0));
+						
+							
+							/*if(group_check.get(a).contains(username)) {
+								
+							}*/
+							groupUsers listener = new groupUsers(group_check.get(a));
+							
+							Platform.runLater(new Runnable() {
+								@Override
+								public void run() {
+									group_box.getChildren().add(group_button);
+									group_button.setOnMouseClicked(listener);
+								}
+							});
+						}
+						
+						for(int a = 0; a < users.size(); a++) {
+							/*Label user_icon = new Label(users.get(a).substring(0, 1));
+
+							Text user_icon_name = new Text(users.get(a));
+							GridPane user_icon_pane = new GridPane();
+							user_icon_pane.add(user_icon, 0, 0);
+							user_icon_pane.add(user_icon_name, 0, 1);*/
+							Button user_button = new Button();
+							user_button.setText(users.get(a));
+							//////System.outprintln(username);
+							if(online_users.contains(users.get(a)) && !users.get(a).equals(username)) {
+								Platform.runLater(new Runnable() {
+									   @Override
+									   public void run() {
+										    online_box.getChildren().add(user_button);
+											user_button.setOnMouseClicked(new EventHandler<Event>() {
+
+												@Override
+												public void handle(Event event) {
+													//////System.outprintln("Clicked");
+													heading.setText("Chatting with: " + user_button.getText());
+													chat_user = user_button.getText();
+													chat_with_others.add(user_button.getText());
+													try {
+														setUpChat(true);
+													} catch (Exception e) {
+														// TODO Auto-generated catch block
+														//e.printStackTrace();
+													}
+													if(group_name.equals("")) {
+														ChatMain.writer.println("restorelogs");
+														ChatMain.writer.flush();
+														//restoreChat();
+													}
+													threads_container.setVisible(false);
+													container.setVisible(true);
+												}
+												
+											});
+										}
+									});
+							}else if(offline_users.contains(users.get(a)) && !users.get(a).equals(username)) {
+								Platform.runLater(new Runnable() {
+									@Override
+									public void run() {
+										offline_box.getChildren().add(user_button);
+										
+									}
+								});
+							}
+						}
+					
+					}else if(message.contains("signin")) {
+						database = getDatabase(message.split("-")[1]);
+						//System.outprintln(database);
+						ArrayList<String> data = getNames(database);
+						////System.outprintln(data.toString());
+						personal_data = data;
+						passwords = getPasswords(database);
+						ip = ipAddress.getText();
+						username = user_name.getText();
+						password = password_field.getText();
+						password_field.setText("");
+						
+
+						ChatMain.writer.println("updateUsers");
+						ChatMain.writer.flush();
+						
+					}else if(message.equals("quit")) {
+						try {
+							setUpChat(false);
+						} catch (Exception e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+						
+						
+					}else if(message.contains("restoregrouplogs")) {
+						
+					
 					}else if(message.equals("failure")) {
 						try {
 							setUpChat(false);
@@ -280,26 +328,31 @@ public class ChatMain extends Application{
 					
 					}
 					else {
+						text.setText("");
 						//updateChatlog(message);
 						String sentfrom[] = message.split(":");
-						System.out.println(Arrays.toString(sentfrom));
+						//System.outprintln(Arrays.toString(sentfrom));
 						if(chat_with_others.contains(sentfrom[0]) || sentfrom[0].equals(username)) {
-							System.out.println("Updating: " + group_name);
+							//System.outprintln("Updating: " + group_name);
 							//group_name = "";
 							if(!group_name.equals("")) {
 								if(sentfrom.length == 3) {
 									if(sentfrom[2].equals(group_name)) {
-										System.out.println("Correct");
-										message = sentfrom[0] + sentfrom[1];
-										updateGrouplog(message);
-										restoreGrouplog();
+										//System.outprintln("Correct");
+										//message = sentfrom[0] + sentfrom[1];
+
+										text.appendText(message);
+										//updateGrouplog(message);
+										//restoreGrouplog();
 									}
 								}
 							}else {
 								if(sentfrom.length < 3) {
-									System.out.println("Incorrect");
-									updateChatlog(message);
-									restoreChat();
+									//System.outprintln("Incorrect");
+									
+									text.appendText(message);
+									//updateChatlog(message);
+									//restoreChat();
 								}
 							}
 							//ChatMain.text.appendText(message + "\n");
@@ -348,7 +401,7 @@ public class ChatMain extends Application{
 				TextField group_naming = new TextField();
 				Button create = new Button();
 				MenuButton m = new MenuButton("Select Members");
-				ArrayList<String> names = getNames(getDatabase());
+				ArrayList<String> names = getNames(database);
 				for(int a = 0; a <names.size(); a++) {
 					m.getItems().add(new CheckMenuItem(names.get(a)));
 				}
@@ -365,7 +418,13 @@ public class ChatMain extends Application{
 								members.add(m.getItems().get(a).getText());
 							}
 						}
-						addGroup(group_naming.getText(), members);
+						ChatMain.writer.println("addgroup");
+						ChatMain.writer.flush();
+						ChatMain.writer.println(group_naming.getText());
+						ChatMain.writer.flush();
+						ChatMain.writer.println(concatMembers(members));
+						ChatMain.writer.flush();
+						//addGroup(group_naming.getText(), members);
 						create_group.close();
 						ChatMain.writer.println("update");
 						ChatMain.writer.flush();
@@ -460,12 +519,12 @@ public class ChatMain extends Application{
 		    @Override
 		    public void handle(KeyEvent ke) {
 		        if (ke.getCode().equals(KeyCode.ENTER)) {
-					System.out.println("Send");
+					//System.outprintln("Send");
 		        	String text = input.getText();
-		            ////System.out.println(text);
+		            //////System.outprintln(text);
 		        	if(!(text.equals("") || text.equals(" ") || text.equals("	"))) {
 			            send_message.set_Text(text);
-			            System.out.println("help " + group_name);
+			            //System.outprintln("help " + group_name);
 			            /*if(!group_name.equals("")) {
 			            	updateGrouplog(text);
 			            }*/
@@ -487,12 +546,12 @@ public class ChatMain extends Application{
 
 			@Override
 			public void handle(Event event) {
-				System.out.println("Send");
+				//System.outprintln("Send");
 				String text = input.getText();
-	            ////System.out.println(text);
+	            //////System.outprintln(text);
 	        	if(!(text.equals("") || text.equals(" ") || text.equals("	"))) {
 		            send_message.set_Text(text);
-		            System.out.println("help " + group_name);
+		            //System.outprintln("help " + group_name);
 		            /*if(!group_name.equals("")) {
 		            	updateGrouplog(text);
 		            }*/
@@ -526,9 +585,9 @@ public class ChatMain extends Application{
 
 			@Override
 			public void handle(Event event) {
-				////System.out.println(visibility.getText());
-				System.out.println("Send");
-				setStatus(false);
+				//////System.outprintln(visibility.getText());
+				//System.outprintln("Send");
+				
 				try {
 					setUpChat(false);
 				} catch (Exception e) {
@@ -550,7 +609,7 @@ public class ChatMain extends Application{
 
 			@Override
 			public void handle(Event event) {
-				////System.out.println(back_button.getText());
+				//////System.outprintln(back_button.getText());
 				if(back_button.getText().equals("Back")) {
 					chat_with_others.clear();
 					input.setText("");
@@ -590,11 +649,11 @@ public class ChatMain extends Application{
 		 * User Sign In Interface
 		 * 
 		 */
-		TextField ipAddress = new TextField();
+		ipAddress = new TextField();
 		ipAddress.setPromptText("Enter IP Address");
-		TextField user_name = new TextField();
+		user_name = new TextField();
 		user_name.setPromptText("Username");
-		PasswordField password_field = new PasswordField();
+		password_field = new PasswordField();
 		password_field.setPromptText("Password");
 		wrong_info.setText("Incorrect Username or Password");
 		wrong_info.setVisible(false);
@@ -609,14 +668,14 @@ public class ChatMain extends Application{
 			@Override
 			public void handle(Event event) {
 				
-				//System.out.println(user_name.getText());
-				//System.out.println(password_field.getText());
+				////System.outprintln(user_name.getText());
+				////System.outprintln(password_field.getText());
 				
 				try {
-					ArrayList<String> data = getNames(getDatabase());
-					//System.out.println(data.toString());
+					ArrayList<String> data = getNames(database);
+					////System.outprintln(data.toString());
 					personal_data = data;
-					passwords = getPasswords(getDatabase());
+					passwords = getPasswords(database);
 					ip = ipAddress.getText();
 					username = user_name.getText();
 					password = password_field.getText();
@@ -632,7 +691,7 @@ public class ChatMain extends Application{
 					}else if(status_login == 0){
 						wrong_info.setVisible(true);
 						wrong_info.setText("Incorrect Username or Password");
-						//System.out.println("Wrong sign-in");
+						////System.outprintln("Wrong sign-in");
 					}else {
 						wrong_info.setVisible(true);
 						wrong_info.setText("User already signed in");
@@ -648,13 +707,13 @@ public class ChatMain extends Application{
 					if(addNewUser()) {
 
 						password_field.setText("");
-						ArrayList<String> data = getNames(getDatabase());
+						ArrayList<String> data = getNames(database);
 						personal_data = data;
-						passwords = getPasswords(getDatabase());
+						passwords = getPasswords(database);
 						if(personal_data == null) {
-							//System.out.println("null");
+							////System.outprintln("null");
 						}else {
-							//System.out.println(personal_data.toString());
+							////System.outprintln(personal_data.toString());
 						}
 						
 						heading.setText("Welcome: " + data.get(0));
@@ -668,7 +727,7 @@ public class ChatMain extends Application{
 						primaryStage.sizeToScene();
 					}else {
 						wrong_info.setText("Username already exists");
-						//System.out.println("Duplicate Users");
+						////System.outprintln("Duplicate Users");
 					}
 					
 				} catch (Exception e) {
@@ -686,20 +745,16 @@ public class ChatMain extends Application{
 
 			@Override
 			public void handle(Event event) {
-				//System.out.println(user_name.getText());
-				//System.out.println(password_field.getText());
+				////System.outprintln(user_name.getText());
+				////System.outprintln(password_field.getText());
 				
 				try {
-					ArrayList<String> data = getNames(getDatabase());
-					//System.out.println(data.toString());
-					personal_data = data;
-					passwords = getPasswords(getDatabase());
-					ip = ipAddress.getText();
 					username = user_name.getText();
 					password = password_field.getText();
-					password_field.setText("");
-					
 					setUpChat(true);
+					//ChatMain.writer.println("signin");
+					//ChatMain.writer.flush();
+					
 					/*int status_login = checkUsername(user_name.getText(), password_field.getText());
 					if(status_login == 1) {
 						password_field.setText("");
@@ -708,7 +763,7 @@ public class ChatMain extends Application{
 					}else if(status_login == 0){
 						wrong_info.setVisible(true);
 						wrong_info.setText("Incorrect Username or Password");
-						//System.out.println("Wrong sign-in");
+						////System.outprintln("Wrong sign-in");
 					}else {
 						wrong_info.setVisible(true);
 						wrong_info.setText("User already signed in");
@@ -765,7 +820,7 @@ public class ChatMain extends Application{
 		primaryStage.setOnCloseRequest(new EventHandler<WindowEvent>() {
 			@Override
 			public void handle(WindowEvent e) {
-				setStatus(false);
+				
 				try {
 					setUpChat(false);
 				} catch (Exception f) {
@@ -783,318 +838,58 @@ public class ChatMain extends Application{
 
 	}
 	
-	private ArrayList<String> getOnline(boolean online_check) {
-		Connection c = null;
-	    Statement stmt = null;
-        ArrayList<String> temp = new ArrayList<>();
-	    try {
-	      Class.forName("org.sqlite.JDBC");
-	      c = DriverManager.getConnection("jdbc:sqlite:users.db");
-	      c.setAutoCommit(false);
-	      //System.out.println("Opened database successfully - existing");
-	      
-
-	      stmt = c.createStatement();
-	      ResultSet rs = stmt.executeQuery( "SELECT * FROM USERS;" );
-	      while ( rs.next() ) {
-	         String name = rs.getString("ID");
-	         //System.out.println(name);
-	         String online_user = rs.getString("ONLINE");
-	         String compare = "online";
-	         if(!online_check) {
-	        	 compare = "offline";
-	         }
-	         if(online_user.equals(compare)) {
-	        	 temp.add(name);
-	         }
-	      }
-	      rs.close();
-	      stmt.close();
-	      
-	      
-	      c.close();
-	      
-	    } catch ( Exception e ) {
-	    	//e.printStackTrace();
-	    	System.exit(0);
-	    }
-	    //System.out.println("Operation done successfully - online users");
-	    //System.out.println(temp.toString());
-	    return temp;
+	private ArrayList<String> getOnline(String message) {
+       ArrayList<String> temp = new ArrayList<>();
+	   online_users = parseOnline(message);
+	   
+	   return temp;
 	}
 	
-	private void setStatus(boolean status) {
-		Connection c = null;
-	    //Statement stmt = null;
-	    try {
-	      Class.forName("org.sqlite.JDBC");
-	      c = DriverManager.getConnection("jdbc:sqlite:users.db");
-	      c.setAutoCommit(false);
-	      //System.out.println("Opened database successfully");
-
-	      String sql = "UPDATE USERS set ONLINE = ? where ID=?;";
-
-	      PreparedStatement ps = c.prepareStatement(sql);
-	      ps = c.prepareStatement(sql);
-	      if(!status) {
-	    	  ps.setString(1, "offline");
-	      }else {
-	    	  ps.setString(1, "online");
-	      }
-	      ps.setString(2, username);
-	     
-	      ps.executeUpdate();
-	     
-	      ps.close();
-
-	      
-	      //stmt.close();
-	      c.commit();
-	      c.close();
-	    } catch ( Exception e ) {
-	      //System.err.println( e.getClass().getName() + ": " + e.getMessage() );
-	      //System.exit(0);
-	    }
-	    //System.out.println("Records created successfully");
-	}
-	
-	private void restoreGrouplog() {
-		System.out.println("Restoring Group");
-		ArrayList<String> chatlogs = retrieveGroupHistory();
-		text.setText("");
-		System.out.println("Group history: " + chatlogs.toString());
-		for(int a = 0; a < chatlogs.size(); a++) {
-			text.appendText(chatlogs.get(a) + "\n");
-			//System.out.println(chatlogs.get(a));
+	private ArrayList<String> parseOnline(String message) {
+		ArrayList<String> data_base = new ArrayList<>();
+		String[] online_users = message.split(":");
+		for(int a = 0; a < online_users.length; a++) {
+			data_base.add(online_users[0]);
 		}
+		
+		return data_base;
 	}
 	
-	private void updateGrouplog(String text) {
-		System.out.println("Grouplog: " + text);
-		Connection c = null;
-	    //Statement stmt = null;
-	    try {
-	      Class.forName("org.sqlite.JDBC");
-	      c = DriverManager.getConnection("jdbc:sqlite:users.db");
-	      c.setAutoCommit(false);
-	      //System.out.println("Opened database successfully");
-	      ArrayList<String> database = getNames(getGroups());
-
-	      String sql = "UPDATE GROUPS set CHATLOG = ? where ID=?;";
-
-	      PreparedStatement ps = c.prepareStatement(sql);
-	      ps = c.prepareStatement(sql);
-	      
-	      int a = 0;
-	      boolean found = false;
-	      while(a < database.size() && !found) {
-	    	  if(database.get(a).equals(group_name)) {
-	    		  found = true;
-	    	  }else {
-	    		  a++;
-	    	  }
-	      }
-	      if(found) {
-		      ArrayList<String> chatlog = getGroups().get(a);
-		      String chats = chatlog.get(2);
-		      for(int b = 0; b < chat_with_others.size(); b++) {
-					chats += "USERID."+chat_with_others.get(b)+"."+text+"-";
-			  }
-		      System.out.println("Group Chats saved: "+chats);
-		      
-	    	  ps.setString(1, chats);
-		      ps.setString(2, group_name);
-		     
-		      ps.executeUpdate();
-	      }
-	     
-	      ps.close();
-
-	      
-	      //stmt.close();
-	      c.commit();
-	      c.close();
-	    } catch ( Exception e ) {
-	    	e.printStackTrace();
-	      System.exit(0);
-	    }
-	}
-	
-	private ArrayList<String> retrieveGroupHistory() {
-		System.out.println("Retrieving group chat");
-		ArrayList<String> database = getNames(getGroups());
-	    ArrayList<String> chat_logs = new ArrayList<>();
-		int a = 0;
-		boolean found = false;
-		while(a < database.size() && !found) {
-	    	 if(database.get(a).equals(group_name)) {
-	    		 found = true;
-	    	 }else {
-		    	 a++;
-	    	 }
-	    }
-        ArrayList<String> chatlog = getGroups().get(a);
-        String chats = chatlog.get(2);
-    	System.out.println("Group Chats: " + chats);
-	    String[] threads = chats.split("-");
-    	//System.out.println("Group Thread array: " + Arrays.toString(threads));
-	    for(int b = 0; b < threads.length; b++) {
-		    String messages = "";
-	    	String temp = threads[b];
-	    	//System.out.println("Parsed string: " + temp);
-	    	String[] parser = temp.split("\\.");
-	    	System.out.println(Arrays.toString(parser));
-	    	if(parser.length > 1) {
-	    		
-	    		if(parser.length > 2 && parser[1].equals(username)) {
-	    			String parse_message = parser[2].split(":")[0];
-	    			if(parse_message.equals(parser[1])) {
-	    				messages = parser[2];
-	    			}else {
-	    				messages = parser[2];
-	    			}
-	    		}
-	    	}
-	    	//System.out.println("Parsed array: " + Arrays.toString(parser));
-		    chat_logs.add(messages);
-	    }
-	    
-	    return chat_logs;
-	}
-	
-	private void updateChatlog(String text) {
-		Connection c = null;
-	    //Statement stmt = null;
-	    try {
-	      Class.forName("org.sqlite.JDBC");
-	      c = DriverManager.getConnection("jdbc:sqlite:users.db");
-	      c.setAutoCommit(false);
-	      //System.out.println("Opened database successfully");
-	      ArrayList<String> database = getNames(getDatabase());
-
-	      String sql = "UPDATE USER_CLIENT set CHATS = ? where ID=?;";
-
-	      
-	      int a = 0;
-	      boolean found = false;
-	      while(a < database.size() && !found) {
-	    	  if(database.get(a).equals(username)) {
-	    		  found = true;
-	    	  }else {
-	    		  a++;
-	    	  }
-	      }
-	      if(found) {
-		      ArrayList<String> chatlog = getDatabase().get(a);
-		      String chats = chatlog.get(3);
-		      
-		      for(int b = 0; b < chat_with_others.size(); b++) {
-		    	  //String temp = username + ":" + text.split(":")[1];
-		    	  chats += "USERID."+chat_with_others.get(b)+"."+text+"-";
-			  }
-
-		      System.out.println("Chat logs: " +chats);
-
-		      PreparedStatement ps = c.prepareStatement(sql);
-		      ps = c.prepareStatement(sql);
-		      
-	    	  ps.setString(1, chats);
-		      ps.setString(2, username);
-		     
-		      ps.executeUpdate();
-		      ps.close();
-		      
-		      for(int b = 0; b < chat_with_others.size(); b++) {
-
-			      System.out.println("Chat logs: " +chats);
-
-			      ps = c.prepareStatement(sql);
-			      ps = c.prepareStatement(sql);
-			      
-		    	  ps.setString(1, chats);
-			      ps.setString(2, chat_with_others.get(b));
-			     
-			      ps.executeUpdate();
-			      ps.close();
-		      }
-	      }
-	     
-
-	      
-	      //stmt.close();
-	      c.commit();
-	      c.close();
-	    } catch ( Exception e ) {
-	    	e.printStackTrace();
-	      System.exit(0);
-	    }
-	    //System.out.println("Records created successfully");
-	}
-	
-	private void restoreChat() {
-		ArrayList<String> chatlogs = retrieveHistory();
-		text.setText("");
-		for(int a = 0; a < chatlogs.size(); a++) {
-			text.appendText(chatlogs.get(a) + "\n");
-			//System.out.println(chatlogs.get(a));
+	private ArrayList<String> getPasswords(ArrayList<ArrayList<String>> parse_array) {
+		ArrayList<String> names = new ArrayList<String>();
+		for(int a = 0; a < parse_array.size(); a++) {
+			////System.outprintln(parse_array.get(a).toString());
+			names.add(parse_array.get(a).get(1));
 		}
-	}
-	
-	private ArrayList<String> retrieveHistory() {
-		ArrayList<String> database = getNames(getDatabase());
-	    ArrayList<String> chat_logs = new ArrayList<>();
-		int a = 0;
-		boolean found = false;
-		//System.out.println(username);
-		while(a < database.size() && !found) {
-	    	 if(database.get(a).equals(username)) {
-	    		 found = true;
-	    	 }else {
-		    	 a++;
-	    	 }
-	    }
-        ArrayList<String> chatlog = getDatabase().get(a);
-        String chats = chatlog.get(3);
-    	System.out.println("Chats: " + chats);
-	    String[] threads = chats.split("-");
-    	//System.out.println("Thread array: " + Arrays.toString(threads));
-	    for(int b = 0; b < threads.length; b++) {
-		    String messages = "";
-	    	String temp = threads[b];
-	    	//System.out.println("Parsed string: " + temp);
-	    	String[] parser = temp.split("\\.");
-	    	if(parser.length > 1 ) {
-	    		
-	    		if(parser.length > 2 && (parser[1].equals(chat_user) || parser[1].equals(username))) {
-	    			messages = parser[2];
-	    		}
-	    	}
-	    	//System.out.println("Parsed array: " + Arrays.toString(parser));
-		    chat_logs.add(messages);
-	    }
-	    
-	    return chat_logs;
+		
+		return names;
 	}
 	
 	private ArrayList<String> getNames(ArrayList<ArrayList<String>> parse_array) {
 		ArrayList<String> names = new ArrayList<String>();
 		for(int a = 0; a < parse_array.size(); a++) {
-			//System.out.println(parse_array.get(a).toString());
+			////System.outprintln(parse_array.get(a).toString());
 			names.add(parse_array.get(a).get(0));
 		}
 		
 		return names;
 	}
 	
-	private ArrayList<String> getPasswords(ArrayList<ArrayList<String>> parse_array) {
-		ArrayList<String> names = new ArrayList<String>();
-		for(int a = 0; a < parse_array.size(); a++) {
-			//System.out.println(parse_array.get(a).toString());
-			names.add(parse_array.get(a).get(1));
+	private ArrayList<ArrayList<String>> getDatabase(String data) {
+		ArrayList<ArrayList<String>> data_base = new ArrayList<>();
+		String[] users_split = data.split(":");
+		for(int a = 0; a < users_split.length; a++) {
+			String[] data_split = users_split[a].split("\\.");
+			ArrayList<String> temp = new ArrayList<>();
+			for(int b = 0; b < data_split.length; b++) {
+				temp.add(data_split[b]);
+			}
+			data_base.add(temp);
 		}
 		
-		return names;
+		return data_base;
 	}
+	
 	
 	private String concatMembers(ArrayList<String> con) {
 		String message = "";
@@ -1105,128 +900,7 @@ public class ChatMain extends Application{
 		return message;
 	}
 	
-	private boolean addGroup(String name, ArrayList<String> members) {
-		Connection c = null;
-	    //Statement stmt = null;
-	    try {
-	      Class.forName("org.sqlite.JDBC");
-	      c = DriverManager.getConnection("jdbc:sqlite:users.db");
-	      c.setAutoCommit(false);
-	      //System.out.println("Opened database successfully");
-	      ArrayList<String> current_users = getNames(getGroups());
-	      if(current_users.contains(name)) {
-	    	  return false;
-	      }
-
-	      //stmt = c.createStatement();
-	      String sql = "INSERT INTO GROUPS (ID,USERS,CHATLOG) " +
-	                   "VALUES (?, ?, ?);";
-	  
-	      PreparedStatement ps = c.prepareStatement(sql);
-	      ps.setString(1, name);
-	      String concat_members = concatMembers(members);
-	      ps.setString(2, concat_members);
-	      ps.setString(3, "");
-	      
-	      ps.executeUpdate();
-	      
-	      ps.close();
-
-	      
-	      //stmt.close();
-	      c.commit();
-	      c.close();
-	    } catch ( Exception e ) {
-	      System.err.println( e.getClass().getName() + ": " + e.getMessage() );
-	      System.exit(0);
-	    }
-	    //System.out.println("Records created successfully");
-	    return true;
-	}
 	
-	private ArrayList<ArrayList<String>> getGroups() {
-		Connection c = null;
-	    Statement stmt = null;
-	    ArrayList<ArrayList<String>> groups_data = new ArrayList<>();
-	    try {
-	      Class.forName("org.sqlite.JDBC");
-	      c = DriverManager.getConnection("jdbc:sqlite:users.db");
-	      c.setAutoCommit(false);
-	      //System.out.println("Opened database successfully - existing");
-	      
-
-	      stmt = c.createStatement();
-	      ResultSet rs = stmt.executeQuery( "SELECT * FROM GROUPS;" );
-	      while(rs.next()) {
-	          ArrayList<String> temp = new ArrayList<>();
-	    	  String name = rs.getString("ID");
-		      //System.out.println(name);
-	    	  String users = rs.getString("USERS");
-		      //System.out.println(users);
-	    	  String chatlog = rs.getString("CHATLOG");
-		      //System.out.println(users);
-	    	  temp.add(name);
-	    	  temp.add(users);
-	    	  temp.add(chatlog);
-	    	  groups_data.add(temp);
-	      } 
-	      
-	      rs.close();
-	      stmt.close();
-	      
-	      
-	      c.close();
-	      
-	    }catch (Exception e){
-	    	
-	    }
-	    return groups_data;
-	}
-	
-	private ArrayList<ArrayList<String>> getDatabase() {
-		Connection c = null;
-	    Statement stmt = null;
-	    ArrayList<ArrayList<String>> users_data = new ArrayList<>();
-	    try {
-	      Class.forName("org.sqlite.JDBC");
-	      c = DriverManager.getConnection("jdbc:sqlite:users.db");
-	      c.setAutoCommit(false);
-	      //System.out.println("Opened database successfully - existing");
-	      
-
-	      stmt = c.createStatement();
-	      ResultSet rs = stmt.executeQuery( "SELECT * FROM USER_CLIENT;" );
-	      while ( rs.next() ) {
-	         ArrayList<String> temp = new ArrayList<>();
-	         String name = rs.getString("ID");
-	         //System.out.println(name);
-	         String password = rs.getString("PASSWORD");
-	         //System.out.println(password);
-	         String friends = rs.getString("FRIENDS");
-	         //System.out.println(friends);
-	         String chats = rs.getString("CHATS");
-	         //System.out.println(chats);
-	         
-	         
-	         temp.add(name);
-	         temp.add(password);
-	         temp.add(friends);
-	         temp.add(chats);
-	         users_data.add(temp);
-	      }
-	      rs.close();
-	      stmt.close();
-	      
-	      
-	      c.close();
-	      
-	    } catch ( Exception e ) {
-	    	//e.printStackTrace();
-	    	System.exit(0);
-	    }
-	    //System.out.println("Operation done successfully");
-	    return users_data;
-	}
 	
 	class sendMessage implements Runnable {
 
@@ -1237,7 +911,7 @@ public class ChatMain extends Application{
 	    }
 
 	    public void run() {
-	    	System.out.println("Sending message: " + text_field);
+	    	//System.outprintln("Sending message: " + text_field);
 	    	String message = username+":";
 			for(int a = 0; a < chat_with_others.size(); a++) {
 				message += "BEGCHAT" + chat_with_others.get(a) + "ENDCHAT";
