@@ -59,7 +59,7 @@ public class ChatMain extends Application{
 	private static ArrayList<ArrayList<String>> database;
 	private static ArrayList<String> personal_data;
 	private static ArrayList<String> passwords;
-	private static ArrayList<String> chat_with_others, online_users, offline_users;
+	private static ArrayList<String> chat_with_others, online_users = new ArrayList<>(), offline_users = new ArrayList<>();
 	private static HBox online_box, offline_box, group_box;
 	private static VBox threads_container, container;
 	private static Label heading;
@@ -93,6 +93,7 @@ public class ChatMain extends Application{
 		if(toggle) {
 			//System.outprintln(ip);
 			ChatMain.socket = new Socket("127.0.0.1", 4242);
+			System.out.println("test");
 			InputStreamReader streamReader = new InputStreamReader(socket.getInputStream());
 			ChatMain.reader = new BufferedReader(streamReader);
 			ChatMain.writer = new PrintWriter(socket.getOutputStream());
@@ -116,7 +117,7 @@ public class ChatMain extends Application{
 			readerThread.start();
 		}else {
 			if(ChatMain.socket!=null) {
-				ChatMain.writer.println("quit");
+				ChatMain.writer.println("quit:" + username);
 				ChatMain.writer.flush();
 				//System.outprintln("socket closed on: " + username);
 				ChatMain.writer.println("update");
@@ -141,13 +142,20 @@ public class ChatMain extends Application{
 		
 		private ArrayList<String> parseMembers(ArrayList<String> parse_array) {
 			//System.outprintln(parse_array.toString());
-			String[] temp = parse_array.get(1).split(":");
-			//System.outprintln(Arrays.toString(temp));
+			String[] temp = null;
 			ArrayList<String> members_parsed = new ArrayList<>();
-			
-			for(int a = 0; a < temp.length; a++) {
-				members_parsed.add(temp[a]);
+			try{
+				temp = parse_array.get(1).split(":");
+				for(int a = 0; a < temp.length; a++) {
+					members_parsed.add(temp[a]);
+				}
+			}catch(Exception e) {
+				
 			}
+			//System.outprintln(Arrays.toString(temp));
+			
+			
+		
 			
 			return members_parsed;
 		}
@@ -186,6 +194,7 @@ public class ChatMain extends Application{
 					System.out.println(this.toString() + " " + message);
 					if(message.equals("update")) {
 						//setStatus(true);
+						updateUsers();
 						Platform.runLater(new Runnable() {
 							@Override
 							public void run() {
@@ -198,13 +207,15 @@ public class ChatMain extends Application{
 					}else if(message.contains("updateUsers")) {
 						System.out.println(message);
 						database = getDatabase(message.split("-")[1]);
-						online_users = getOnline(message.split("-")[2]);
-						offline_users = getOnline(message.split("-")[3]);
-						System.out.println(offline_users.toString());
 						ArrayList<String> users = getNames(database);
 						ArrayList<ArrayList<String>> group_check = new ArrayList<ArrayList<String>>();
 						try{
-							group_check = getDatabase(message.split("-")[4]);
+							online_users = getOnline(message.split("-")[2]);
+							System.out.println(online_users.toString());
+							offline_users = getOnline(message.split("-")[3]);
+							System.out.println(offline_users.toString());
+							//group_check = getDatabase(message.split("-")[4]);
+							System.out.println(group_check.toString());
 						}catch(Exception e){
 							
 						}
@@ -261,13 +272,29 @@ public class ChatMain extends Application{
 													chat_user = user_button.getText();
 													chat_with_others.add(user_button.getText());
 													try {
-														setUpChat(true);
+														//setUpChat(true);
 													} catch (Exception e) {
 														// TODO Auto-generated catch block
-														//e.printStackTrace();
+														e.printStackTrace();
 													}
 													if(group_name.equals("")) {
-														ChatMain.writer.println("restorelogs");
+														String text = input.getText();
+											        	System.out.println(text);
+											        	
+											        	if(!text.equals("")) {
+											            //////System.outprintln(text);
+												        	sendMessage send_message = new sendMessage();
+	
+												        	send_message.set_Text(text);
+												            //System.outprintln("help " + group_name);
+												            /*if(!group_name.equals("")) {
+												            	updateGrouplog(text);
+												            }*/
+												            //updateChatlog(text);
+												            Thread message = new Thread(send_message);
+												            message.start();
+											        	}
+														ChatMain.writer.println("restoreLogs:"+chat_user);
 														ChatMain.writer.flush();
 														//restoreChat();
 													}
@@ -278,7 +305,8 @@ public class ChatMain extends Application{
 											});
 										}
 									});
-							}else if(offline_users.contains(users.get(a)) && !users.get(a).equals(username)) {
+							}else if(offline_users.contains(users.get(a)) 
+									&& !users.get(a).equals(username)) {
 								Platform.runLater(new Runnable() {
 									@Override
 									public void run() {
@@ -320,6 +348,7 @@ public class ChatMain extends Application{
 					}else if(message.equals("failure")) {
 						try {
 							setUpChat(false);
+							System.out.println(message);
 							
 						} catch (Exception e) {
 							// TODO Auto-generated catch block
@@ -381,8 +410,8 @@ public class ChatMain extends Application{
 		 */
 		Label online_users = new Label();
 		online_users.setText("Who is online");
-		Label offline_users = new Label();
-		offline_users.setText("Who is offline");
+		Label offline_users_label = new Label();
+		offline_users_label.setText("Who is offline");
 		online_box = new HBox();
 		offline_box = new HBox();
 		Label groups = new Label();
@@ -453,7 +482,7 @@ public class ChatMain extends Application{
 
 		threads_container.getChildren().add(online_users);
 		threads_container.getChildren().add(online_box);
-		threads_container.getChildren().add(offline_users);
+		threads_container.getChildren().add(offline_users_label);
 		threads_container.getChildren().add(offline_box);
 		threads_container.getChildren().add(groups);
 		threads_container.getChildren().add(group_box);
@@ -521,18 +550,17 @@ public class ChatMain extends Application{
 		        if (ke.getCode().equals(KeyCode.ENTER)) {
 					//System.outprintln("Send");
 		        	String text = input.getText();
+		        	System.out.println(text);
 		            //////System.outprintln(text);
-		        	if(!(text.equals("") || text.equals(" ") || text.equals("	"))) {
-			            send_message.set_Text(text);
-			            //System.outprintln("help " + group_name);
-			            /*if(!group_name.equals("")) {
-			            	updateGrouplog(text);
-			            }*/
-			            //updateChatlog(text);
-			            Thread message = new Thread(send_message);
-			            message.start();
-			            
-		        	}
+		        	send_message.set_Text(text);
+		            //System.outprintln("help " + group_name);
+		            /*if(!group_name.equals("")) {
+		            	updateGrouplog(text);
+		            }*/
+		            //updateChatlog(text);
+		            Thread message = new Thread(send_message);
+		            message.start();
+		        	
 		            input.clear();
 		        	
 		            ke.consume();
@@ -549,17 +577,17 @@ public class ChatMain extends Application{
 				//System.outprintln("Send");
 				String text = input.getText();
 	            //////System.outprintln(text);
-	        	if(!(text.equals("") || text.equals(" ") || text.equals("	"))) {
-		            send_message.set_Text(text);
-		            //System.outprintln("help " + group_name);
-		            /*if(!group_name.equals("")) {
-		            	updateGrouplog(text);
-		            }*/
-		            //updateChatlog(text);
-		            Thread message = new Thread(send_message);
-		            message.start();
-		            
-	        	}
+				send_message.set_Text(text);
+	            //System.outprintln("help " + group_name);
+	            /*if(!group_name.equals("")) {
+	            	updateGrouplog(text);
+	            }*/
+	            //updateChatlog(text);
+		    	ChatMain.writer.println(send_message);
+		    	ChatMain.writer.flush();
+	            //Thread message = new Thread(send_message);
+	            //message.start();
+	            
 	            input.clear();
 			}
 			
@@ -592,7 +620,7 @@ public class ChatMain extends Application{
 					setUpChat(false);
 				} catch (Exception e) {
 					// TODO Auto-generated catch block
-					//e.printStackTrace();
+					e.printStackTrace();
 				}
 				username = "";
 				password = "";
@@ -672,14 +700,16 @@ public class ChatMain extends Application{
 				////System.outprintln(password_field.getText());
 				
 				try {
+					/*System.out.println(database);
 					ArrayList<String> data = getNames(database);
 					////System.outprintln(data.toString());
 					personal_data = data;
-					passwords = getPasswords(database);
+					passwords = getPasswords(database);*/
 					ip = ipAddress.getText();
 					username = user_name.getText();
 					password = password_field.getText();
 					password_field.setText("");
+					System.out.println("test");
 					
 					setUpChat(true);
 					/*int status_login = checkUsername(user_name.getText(), password_field.getText());
@@ -698,7 +728,7 @@ public class ChatMain extends Application{
 					}*/
 				} catch (Exception e) {
 					// TODO Auto-generated catch block
-					//e.printStackTrace();
+					e.printStackTrace();
 				}
 				/*try {
 					ip = ipAddress.getText();
@@ -749,8 +779,10 @@ public class ChatMain extends Application{
 				////System.outprintln(password_field.getText());
 				
 				try {
+					ip = ipAddress.getText();
 					username = user_name.getText();
 					password = password_field.getText();
+					password_field.setText("");
 					setUpChat(true);
 					//ChatMain.writer.println("signin");
 					//ChatMain.writer.flush();
@@ -825,7 +857,7 @@ public class ChatMain extends Application{
 					setUpChat(false);
 				} catch (Exception f) {
 					// TODO Auto-generated catch block
-					//e.printStackTrace();
+					f.printStackTrace();
 				}
 			}
 		});
@@ -839,17 +871,16 @@ public class ChatMain extends Application{
 	}
 	
 	private ArrayList<String> getOnline(String message) {
-       ArrayList<String> temp = new ArrayList<>();
-	   online_users = parseOnline(message);
+	   return parseOnline(message);
 	   
-	   return temp;
 	}
 	
 	private ArrayList<String> parseOnline(String message) {
 		ArrayList<String> data_base = new ArrayList<>();
 		String[] online_users = message.split(":");
 		for(int a = 0; a < online_users.length; a++) {
-			data_base.add(online_users[0]);
+			System.out.println(online_users[a]);
+			data_base.add(online_users[a]);
 		}
 		
 		return data_base;
@@ -908,16 +939,18 @@ public class ChatMain extends Application{
 	    
 	    public void set_Text(String text) {
 	    	this.text_field = text;
+        	System.out.println(text);
 	    }
 
 	    public void run() {
-	    	//System.outprintln("Sending message: " + text_field);
+	    	System.out.println("Sending message: " + text_field);
 	    	String message = username+":";
 			for(int a = 0; a < chat_with_others.size(); a++) {
 				message += "BEGCHAT" + chat_with_others.get(a) + "ENDCHAT";
 			}
 			message += ":" + this.text_field;
 			message += ":" + group_name;
+	    	System.out.println("Sending message: " + message);
 	    	ChatMain.writer.println(message);
 	    	ChatMain.writer.flush();
 	    }

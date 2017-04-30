@@ -55,7 +55,7 @@ public class ServerMain extends Observable {
 	private void setUpNetworking() throws Exception {
 		@SuppressWarnings("resource")
 		ServerSocket serverSock = new ServerSocket(4242);
-		//System.outprintln(InetAddress.getLocalHost().getHostAddress());
+		////System.outprintln(InetAddress.getLocalHost().getHostAddress());
 		//update_runnable run_update = new update_runnable();
 		
 		
@@ -64,7 +64,9 @@ public class ServerMain extends Observable {
 		
 		while (true) {
 			Socket clientSocket = serverSock.accept();
+			//System.out.println("test");
 			String[] info = log_Next(clientSocket);
+			//System.out.println("test");
 			String user = info[0];
 			String password = info[1];
 			ChatRoom_Observer writer = new ChatRoom_Observer(clientSocket.getOutputStream(), user);
@@ -72,24 +74,24 @@ public class ServerMain extends Observable {
 			Thread t = new Thread(user_detected);
 			t.start();
 			this.addObserver(writer);
-			//System.outprintln(user);
-			//System.outprintln(password);
+			////System.outprintln(user);
+			//System.out.println("Check user: " + checkUsername(user, password));
 			if(checkUsername(user, password) == 1) {
-				////System.outprintln("Observer User: "+user);
-				//System.outprintln("User");
+				//////System.outprintln("Observer User: "+user);
+				////System.outprintln("User");
 				users_active.add(user_detected);
 				setStatus(true, user);
 				setChanged();
 				notifyObservers("update");
 				
 				String sending_message = "signin" + "-" + parseDatabase();
-				//System.outprintln(sending_message);
+				////System.outprintln(sending_message);
 				setChanged();
 				notifyObservers(sending_message);
 
-				//System.outprintln("got a connection");
+				////System.outprintln("got a connection");
 			}else if(checkUsername(user, password) == -2) {
-				//System.outprintln("New User");
+				////System.outprintln("New User");
 				addNewUser(user, password);
 				setStatus(true, user);
 
@@ -97,7 +99,7 @@ public class ServerMain extends Observable {
 				notifyObservers("update");
 				
 			}else {
-				//System.outprintln("Failed " + checkUsername(user, password));
+				////System.outprintln("Failed " + checkUsername(user, password));
 				setChanged();
 				notifyObservers("failure");
 				
@@ -109,7 +111,7 @@ public class ServerMain extends Observable {
 	}
 	
 	private void setStatus(boolean status, String username) {
-		System.out.println(i++ + " " + status + username);
+		//System.out.println(i++ + " " + status + username);
 		
 		Connection c = null;
 	    //Statement stmt = null;
@@ -117,7 +119,7 @@ public class ServerMain extends Observable {
 	      Class.forName("org.sqlite.JDBC");
 	      c = DriverManager.getConnection("jdbc:sqlite:users.db");
 	      c.setAutoCommit(false);
-	      ////System.outprintln("Opened database successfully");
+	      //////System.outprintln("Opened database successfully");
 
 	      String sql = "UPDATE USERS set ONLINE = ? where ID=?;";
 
@@ -139,10 +141,10 @@ public class ServerMain extends Observable {
 	      c.commit();
 	      c.close();
 	    } catch ( Exception e ) {
-	      //System.err.println( e.getClass().getName() + ": " + e.getMessage() );
-	      //System.exit(0);
+	      ////System.err.println( e.getClass().getName() + ": " + e.getMessage() );
+	      ////System.exit(0);
 	    }
-	    ////System.outprintln("Records created successfully");
+	    //////System.outprintln("Records created successfully");
 	}
 	
 	private boolean addNewUser(String username, String password) {
@@ -152,7 +154,7 @@ public class ServerMain extends Observable {
 	      Class.forName("org.sqlite.JDBC");
 	      c = DriverManager.getConnection("jdbc:sqlite:users.db");
 	      c.setAutoCommit(false);
-	      ////System.outprintln("Opened database successfully");
+	      //////System.outprintln("Opened database successfully");
 	      ArrayList<String> current_users = getNames(getDatabase());
 	      if(current_users.contains(username)) {
 	    	  return false;
@@ -188,17 +190,17 @@ public class ServerMain extends Observable {
 	      c.commit();
 	      c.close();
 	    } catch ( Exception e ) {
-	      System.err.println( e.getClass().getName() + ": " + e.getMessage() );
-	      System.exit(0);
+	      //System.err.println( e.getClass().getName() + ": " + e.getMessage() );
+	      //System.exit(0);
 	    }
-	    ////System.outprintln("Records created successfully");
+	    //////System.outprintln("Records created successfully");
 	    return true;
 	}
 	
 	private ArrayList<String> getNames(ArrayList<ArrayList<String>> parse_array) {
 		ArrayList<String> names = new ArrayList<String>();
 		for(int a = 0; a < parse_array.size(); a++) {
-			////System.outprintln(parse_array.get(a).toString());
+			//////System.outprintln(parse_array.get(a).toString());
 			names.add(parse_array.get(a).get(0));
 		}
 		
@@ -208,7 +210,7 @@ public class ServerMain extends Observable {
 	private ArrayList<String> getPasswords(ArrayList<ArrayList<String>> parse_array) {
 		ArrayList<String> names = new ArrayList<String>();
 		for(int a = 0; a < parse_array.size(); a++) {
-			////System.outprintln(parse_array.get(a).toString());
+			//////System.outprintln(parse_array.get(a).toString());
 			names.add(parse_array.get(a).get(1));
 		}
 		
@@ -219,9 +221,9 @@ public class ServerMain extends Observable {
 		//check username exists
 		//check password
 		ArrayList<String> online_users = getOnline(true);
-		////System.outprintln(personal_data.toString());
-		////System.outprintln(passwords.toString());
-		//System.outprintln(online_users.toString());
+		//////System.outprintln(personal_data.toString());
+		//////System.outprintln(passwords.toString());
+		//System.out.println("Online: " + online_users.toString());
 		
 		if(getNames(getDatabase()).contains(user) && getPasswords(getDatabase()).contains(pass) && !online_users.contains(user) ) {
 			return 1;
@@ -253,16 +255,16 @@ public class ServerMain extends Observable {
 	      Class.forName("org.sqlite.JDBC");
 	      c = DriverManager.getConnection("jdbc:sqlite:users.db");
 	      c.setAutoCommit(false);
-	      ////System.outprintln("Opened database successfully - existing");
+	      //////System.outprintln("Opened database successfully - existing");
 	      
 
 	      stmt = c.createStatement();
 	      ResultSet rs = stmt.executeQuery( "SELECT * FROM USERS;" );
 	      while ( rs.next() ) {
 	         String name = rs.getString("ID");
-	         ////System.outprintln(name);
+	         //////System.outprintln(name);
 	         String online_user = rs.getString("ONLINE");
-	         System.out.println(name + " " +online_user);
+	         //System.out.println(name + " " +online_user);
 	         String compare = "online";
 	         if(!online_check) {
 	        	 compare = "offline";
@@ -279,37 +281,37 @@ public class ServerMain extends Observable {
 	      
 	    } catch ( Exception e ) {
 	    	//e.printStackTrace();
-	    	System.exit(0);
+	    	//System.exit(0);
 	    }
-	    ////System.outprintln("Operation done successfully - online users");
-	    ////System.outprintln(temp.toString());
+	    //////System.outprintln("Operation done successfully - online users");
+	    //////System.outprintln(temp.toString());
 	    return temp;
 	}
 	
 	private void restoreGrouplog(String username, String group_name) {
-		//System.outprintln("Restoring Group");
+		////System.outprintln("Restoring Group");
 		ArrayList<String> chatlogs = retrieveGroupHistory(username, group_name);
-		//System.outprintln("Group history: " + chatlogs.toString());
+		////System.outprintln("Group history: " + chatlogs.toString());
 		String temp = "";
 		for(int a = 0; a < chatlogs.size(); a++) {
 			temp += chatlogs.get(a) + "\n";
 			
 			//text.appendText(chatlogs.get(a) + "\n");
-			////System.outprintln(chatlogs.get(a));
+			//////System.outprintln(chatlogs.get(a));
 		}
 		setChanged();
 		notifyObservers(temp);
 	}
 	
 	private void updateGrouplog(String text, String group_name, ArrayList<String> chat_with_others) {
-		//System.outprintln("Grouplog: " + text);
+		////System.outprintln("Grouplog: " + text);
 		Connection c = null;
 	    //Statement stmt = null;
 	    try {
 	      Class.forName("org.sqlite.JDBC");
 	      c = DriverManager.getConnection("jdbc:sqlite:users.db");
 	      c.setAutoCommit(false);
-	      ////System.outprintln("Opened database successfully");
+	      //////System.outprintln("Opened database successfully");
 	      ArrayList<String> database = getNames(getGroups());
 
 	      String sql = "UPDATE GROUPS set CHATLOG = ? where ID=?;";
@@ -332,7 +334,7 @@ public class ServerMain extends Observable {
 		      for(int b = 0; b < chat_with_others.size(); b++) {
 					chats += "USERID."+chat_with_others.get(b)+"."+text+"-";
 			  }
-		      //System.outprintln("Group Chats saved: "+chats);
+		      ////System.outprintln("Group Chats saved: "+chats);
 		      
 	    	  ps.setString(1, chats);
 		      ps.setString(2, group_name);
@@ -348,12 +350,12 @@ public class ServerMain extends Observable {
 	      c.close();
 	    } catch ( Exception e ) {
 	    	e.printStackTrace();
-	      System.exit(0);
+	      //System.exit(0);
 	    }
 	}
 	
 	private ArrayList<String> retrieveGroupHistory(String username, String group_name) {
-		//System.outprintln("Retrieving group chat");
+		////System.outprintln("Retrieving group chat");
 		ArrayList<String> database = getNames(getGroups());
 	    ArrayList<String> chat_logs = new ArrayList<>();
 		int a = 0;
@@ -367,15 +369,15 @@ public class ServerMain extends Observable {
 	    }
         ArrayList<String> chatlog = getGroups().get(a);
         String chats = chatlog.get(2);
-    	//System.outprintln("Group Chats: " + chats);
+    	////System.outprintln("Group Chats: " + chats);
 	    String[] threads = chats.split("-");
-    	////System.outprintln("Group Thread array: " + Arrays.toString(threads));
+    	//////System.outprintln("Group Thread array: " + Arrays.toString(threads));
 	    for(int b = 0; b < threads.length; b++) {
 		    String messages = "";
 	    	String temp = threads[b];
-	    	////System.outprintln("Parsed string: " + temp);
+	    	//////System.outprintln("Parsed string: " + temp);
 	    	String[] parser = temp.split("\\.");
-	    	//System.outprintln(Arrays.toString(parser));
+	    	////System.outprintln(Arrays.toString(parser));
 	    	if(parser.length > 1) {
 	    		
 	    		if(parser.length > 2 && parser[1].equals(username)) {
@@ -387,7 +389,7 @@ public class ServerMain extends Observable {
 	    			}
 	    		}
 	    	}
-	    	////System.outprintln("Parsed array: " + Arrays.toString(parser));
+	    	//////System.outprintln("Parsed array: " + Arrays.toString(parser));
 		    chat_logs.add(messages);
 	    }
 	    
@@ -401,7 +403,7 @@ public class ServerMain extends Observable {
 	      Class.forName("org.sqlite.JDBC");
 	      c = DriverManager.getConnection("jdbc:sqlite:users.db");
 	      c.setAutoCommit(false);
-	      ////System.outprintln("Opened database successfully");
+	      //////System.outprintln("Opened database successfully");
 	      ArrayList<String> database = getNames(getDatabase());
 
 	      String sql = "UPDATE USER_CLIENT set CHATS = ? where ID=?;";
@@ -425,7 +427,7 @@ public class ServerMain extends Observable {
 		    	  chats += "USERID."+chat_with_others.get(b)+"."+text+"-";
 			  }
 
-		      //System.outprintln("Chat logs: " +chats);
+		      ////System.outprintln("Chat logs: " +chats);
 
 		      PreparedStatement ps = c.prepareStatement(sql);
 		      ps = c.prepareStatement(sql);
@@ -438,7 +440,7 @@ public class ServerMain extends Observable {
 		      
 		      for(int b = 0; b < chat_with_others.size(); b++) {
 
-			      //System.outprintln("Chat logs: " +chats);
+			      ////System.outprintln("Chat logs: " +chats);
 
 			      ps = c.prepareStatement(sql);
 			      ps = c.prepareStatement(sql);
@@ -458,18 +460,43 @@ public class ServerMain extends Observable {
 	      c.close();
 	    } catch ( Exception e ) {
 	    	e.printStackTrace();
-	      System.exit(0);
+	      //System.exit(0);
 	    }
-	    ////System.outprintln("Records created successfully");
+	    //////System.outprintln("Records created successfully");
+	}
+	
+	private ArrayList<String> parse(String arg) {
+		String message = arg;
+		ArrayList<String> temp = new ArrayList<>();
+		int a = 0;
+		while(a + 6 < message.length()) {
+			String checkbeing = message.substring(a, a + 7);
+			////System.outprintln("Checkbeing: " + checkbeing);
+			if(checkbeing.equals("BEGCHAT")) {
+				int ending = a;
+				String endcheck = checkbeing;
+				while(!endcheck.equals("ENDCHAT") && (ending+7) < message.length()) {
+					////System.outprintln("Endcheck: " + endcheck);
+					ending++;
+					endcheck = message.substring(ending, ending + 7);
+				}
+				temp.add(message.substring(a + 7, ending));
+			}
+			a++;
+		}
+		
+		return temp;
 	}
 	
 	private void restoreChat(String username, String chat_user) {
+		System.out.println("test");
 		ArrayList<String> chatlogs = retrieveHistory(username, chat_user);
+		System.out.println(chatlogs.toString());
 		String temp = "";
 		for(int a = 0; a < chatlogs.size(); a++) {
 			temp += chatlogs.get(a) + "\n";
 		}
-		
+		System.out.println(temp);
 		setChanged();
 		notifyObservers(temp);
 		
@@ -480,7 +507,7 @@ public class ServerMain extends Observable {
 	    ArrayList<String> chat_logs = new ArrayList<>();
 		int a = 0;
 		boolean found = false;
-		////System.outprintln(username);
+		//////System.outprintln(username);
 		while(a < database.size() && !found) {
 	    	 if(database.get(a).equals(username)) {
 	    		 found = true;
@@ -488,25 +515,28 @@ public class ServerMain extends Observable {
 		    	 a++;
 	    	 }
 	    }
-        ArrayList<String> chatlog = getDatabase().get(a);
-        String chats = chatlog.get(3);
-    	//System.outprintln("Chats: " + chats);
-	    String[] threads = chats.split("-");
-    	////System.outprintln("Thread array: " + Arrays.toString(threads));
-	    for(int b = 0; b < threads.length; b++) {
-		    String messages = "";
-	    	String temp = threads[b];
-	    	////System.outprintln("Parsed string: " + temp);
-	    	String[] parser = temp.split("\\.");
-	    	if(parser.length > 1 ) {
-	    		
-	    		if(parser.length > 2 && (parser[1].equals(chat_user) || parser[1].equals(username))) {
-	    			messages = parser[2];
-	    		}
-	    	}
-	    	////System.outprintln("Parsed array: " + Arrays.toString(parser));
-		    chat_logs.add(messages);
-	    }
+		if(found) {
+	        ArrayList<String> chatlog = getDatabase().get(a);
+	        System.out.println("Retrieve: " + chatlog.toString());
+	        String chats = chatlog.get(3);
+	    	System.out.println("Chats: " + chats);
+		    String[] threads = chats.split("-");
+	    	//////System.outprintln("Thread array: " + Arrays.toString(threads));
+		    for(int b = 0; b < threads.length; b++) {
+			    String messages = "";
+		    	String temp = threads[b];
+		    	//////System.outprintln("Parsed string: " + temp);
+		    	String[] parser = temp.split("\\.");
+		    	if(parser.length > 1 ) {
+		    		
+		    		if(parser.length > 2 && (parser[1].equals(chat_user) || parser[1].equals(username))) {
+		    			messages = parser[2];
+		    		}
+		    	}
+		    	//////System.outprintln("Parsed array: " + Arrays.toString(parser));
+			    chat_logs.add(messages);
+		    }
+		}
 	    
 	    return chat_logs;
 	}
@@ -527,7 +557,7 @@ public class ServerMain extends Observable {
 	      Class.forName("org.sqlite.JDBC");
 	      c = DriverManager.getConnection("jdbc:sqlite:users.db");
 	      c.setAutoCommit(false);
-	      ////System.outprintln("Opened database successfully");
+	      //////System.outprintln("Opened database successfully");
 	      ArrayList<String> current_users = getNames(getGroups());
 	      if(current_users.contains(name)) {
 	    	  return false;
@@ -552,10 +582,10 @@ public class ServerMain extends Observable {
 	      c.commit();
 	      c.close();
 	    } catch ( Exception e ) {
-	      System.err.println( e.getClass().getName() + ": " + e.getMessage() );
-	      System.exit(0);
+	      //System.err.println( e.getClass().getName() + ": " + e.getMessage() );
+	      //System.exit(0);
 	    }
-	    ////System.outprintln("Records created successfully");
+	    //////System.outprintln("Records created successfully");
 	    return true;
 	}
 	
@@ -567,7 +597,7 @@ public class ServerMain extends Observable {
 	      Class.forName("org.sqlite.JDBC");
 	      c = DriverManager.getConnection("jdbc:sqlite:users.db");
 	      c.setAutoCommit(false);
-	      ////System.outprintln("Opened database successfully - existing");
+	      //////System.outprintln("Opened database successfully - existing");
 	      
 
 	      stmt = c.createStatement();
@@ -575,11 +605,11 @@ public class ServerMain extends Observable {
 	      while(rs.next()) {
 	          ArrayList<String> temp = new ArrayList<>();
 	    	  String name = rs.getString("ID");
-		      ////System.outprintln(name);
+		      //////System.outprintln(name);
 	    	  String users = rs.getString("USERS");
-		      ////System.outprintln(users);
+		      //////System.outprintln(users);
 	    	  String chatlog = rs.getString("CHATLOG");
-		      ////System.outprintln(users);
+		      //////System.outprintln(users);
 	    	  temp.add(name);
 	    	  temp.add(users);
 	    	  temp.add(chatlog);
@@ -646,7 +676,7 @@ public class ServerMain extends Observable {
 	      Class.forName("org.sqlite.JDBC");
 	      c = DriverManager.getConnection("jdbc:sqlite:users.db");
 	      c.setAutoCommit(false);
-	      ////System.outprintln("Opened database successfully - existing");
+	      //////System.outprintln("Opened database successfully - existing");
 	      
 
 	      stmt = c.createStatement();
@@ -654,13 +684,13 @@ public class ServerMain extends Observable {
 	      while ( rs.next() ) {
 	         ArrayList<String> temp = new ArrayList<>();
 	         String name = rs.getString("ID");
-	         ////System.outprintln(name);
+	         //////System.outprintln(name);
 	         String password = rs.getString("PASSWORD");
-	         ////System.outprintln(password);
+	         //////System.outprintln(password);
 	         String friends = rs.getString("FRIENDS");
-	         ////System.outprintln(friends);
+	         //////System.outprintln(friends);
 	         String chats = rs.getString("CHATS");
-	         ////System.outprintln(chats);
+	         System.out.println("Chats: " + chats);
 	         
 	         
 	         temp.add(name);
@@ -677,9 +707,10 @@ public class ServerMain extends Observable {
 	      
 	    } catch ( Exception e ) {
 	    	//e.printStackTrace();
-	    	System.exit(0);
+	    	//System.exit(0);
 	    }
-	    ////System.outprintln("Operation done successfully");
+	    //////System.outprintln("Operation done successfully");
+	    System.out.println(users_data.toString());
 	    return users_data;
 	}
 	
@@ -716,12 +747,12 @@ public class ServerMain extends Observable {
 	      stmt.close();
 	      
 	      c.close();
-	      //System.outprintln("Connection to SQLite has been established.");
+	      ////System.outprintln("Connection to SQLite has been established.");
 	      
 	    } catch ( Exception e ) {
 	    	e.printStackTrace();
-	      //System.err.println( e.getClass().getName() + ": " + e.getMessage() );
-	      //System.exit(0);
+	      ////System.err.println( e.getClass().getName() + ": " + e.getMessage() );
+	      ////System.exit(0);
 	    }
 	}
 	
@@ -760,13 +791,14 @@ public class ServerMain extends Observable {
 			try {
 				while ((message = reader.readLine()) != null) {
 					System.out.println("server read "+message);
-					if(message.equals("quit")) {
-						setStatus(false, name);
+					if(message.contains("quit")) {
+						String readin = message.split(":")[1];
+						setStatus(false, readin);
 						setChanged();
 						notifyObservers(message);
 					}else if(message.equals("signin")) {
 						String sending_message = message + "-" + parseDatabase();
-						//System.outprintln(sending_message);
+						////System.outprintln(sending_message);
 						setChanged();
 						notifyObservers(sending_message);
 					}else if(message.equals("updateUsers")) { 
@@ -776,16 +808,17 @@ public class ServerMain extends Observable {
 						setChanged();
 						notifyObservers(sending_message);
 					
+					}else if(message.contains("restoreLogs")) {
+						System.out.println("right");
+						restoreChat(name, message.split(":")[1]);
+						
 					}else {
+						System.out.println(message);
+						updateChatlog(message.split(":")[2], name, parse(message.split(":")[1]));
 						setChanged();
 						notifyObservers(message);
 					}
-					try {
-						Thread.sleep(500);
-					} catch (InterruptedException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
+					
 					
 				}
 			} catch (IOException e) {
